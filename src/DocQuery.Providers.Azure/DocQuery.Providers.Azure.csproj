@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>DocQuery.Providers.Azure</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DocQuery.Core\DocQuery.Core.csproj" />
+  </ItemGroup>
+
+  <!-- 
+    TODO: Uncomment these when you're ready to implement the Azure providers.
+    These are the exact SDKs you'll use on the AI-102 exam.
+    
+    Install them with: dotnet add package Azure.AI.OpenAI
+  -->
+  <!--
+  <ItemGroup>
+    <PackageReference Include="Azure.AI.OpenAI" Version="2.1.0" />
+    <PackageReference Include="Azure.Search.Documents" Version="11.6.0" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="8.0.2" />
+  </ItemGroup>
+  -->
+
+</Project>

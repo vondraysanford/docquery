@@ -1,0 +1,8 @@
+.DS_Store
+bin/
+obj/
+*.user
+appsettings.Development.json
+appsettings.*.local.json
+src/DocQuery.Api/appsettings.local.json
+CLAUDE.md
