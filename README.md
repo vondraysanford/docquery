@@ -33,7 +33,7 @@ Each phase ends with something real: a demo, a benchmark table, a feature I use 
 
 **Goal:** the smallest complete RAG loop, running entirely on local hardware, free, demoable offline. No provider abstraction yet — concrete classes, straight-line code.
 
-- [ ] .NET 8 Web API skeleton with health check endpoint
+- [x] .NET 8 Web API skeleton with health check endpoint
 - [ ] Document ingestion: PDF, Markdown, and plain-text upload → parse → chunk (fixed-size with overlap)
 - [ ] Embeddings via Ollama (`nomic-embed-text`)
 - [ ] Vector storage in ChromaDB (Docker container)
