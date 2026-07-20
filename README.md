@@ -4,7 +4,7 @@
 
 DocQuery is a retrieval-augmented generation (RAG) application: upload technical documentation or study materials and query them in plain English, with every answer grounded in cited source chunks. Built with a C#/.NET 10 backend and React frontend, designed around a swappable provider architecture that will support both fully local inference (Ollama on an NVIDIA DGX Spark) and Azure AI services.
 
-> **🚧 Status: In development — Phase 1 (local RAG MVP) in progress.**
+> **✅ Status: Phase 1 (local RAG MVP) complete — Phase 2 (provider pattern + Azure mode) up next.**
 > This README is the build plan as much as the documentation. Nothing is claimed as done unless its box is checked. Follow along: I'm building this in public.
 
 ---
@@ -40,11 +40,11 @@ Each phase ends with something real: a demo, a benchmark table, a feature I use 
 - [x] Query pipeline: embed question → top-k retrieval → context assembly → answer via Ollama (Llama 3) → response with source citations
 - [x] React UI: upload panel, chat, and a sources pane showing exactly which chunks grounded each answer
 - [x] Smoke tests for the ingestion and query paths
-- [ ] Demo GIF recorded and embedded below
+- [x] Demo GIF recorded and embedded below
 
 **Done when:** a stranger can clone the repo, follow the Getting Started steps, upload a document, ask a question, and get a cited answer — and there's a GIF at the top of this README proving it.
 
-<!-- Demo GIF lands here at the end of Phase 1 -->
+![DocQuery demo: uploading OMSCS course documents and getting a cited answer](docs/demo.gif)
 
 ---
 
