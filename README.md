@@ -224,21 +224,23 @@ The tests use fake providers, so they pass without Ollama, ChromaDB, or Docker r
 ```
 docquery/
 ├── src/
-│   ├── DocQuery.Api/               # Phase 1: API + concrete services
-│   │   ├── Controllers/
-│   │   ├── Services/               # Ingestion, Retrieval, Generation
+│   ├── DocQuery.Api/               # ASP.NET Core Web API — controllers, file parsing, composition root
+│   │   ├── Controllers/            #   DocumentsController (ingestion), QueryController (RAG loop)
+│   │   ├── Services/               #   DocumentTextExtractor (PDF via PdfPig, Markdown/text)
 │   │   └── Program.cs
-│   ├── DocQuery.Core/              # Phase 2: interfaces + domain models
-│   ├── DocQuery.Providers.Local/   # Phase 2: Ollama + ChromaDB (refactored out of Api)
-│   ├── DocQuery.Providers.Azure/   # Phase 2: Azure OpenAI + AI Search
-│   └── docquery-ui/                # Phase 1: React frontend
-├── docs/                           # Architecture notes, decisions
+│   ├── DocQuery.Core/              # Interfaces (IEmbeddingProvider, ILlmProvider, IVectorStore),
+│   │                               #   domain models, ChunkingService
+│   ├── DocQuery.Providers.Local/   # Ollama (embeddings + chat) and ChromaDB implementations
+│   ├── DocQuery.Providers.Azure/   # Phase 2: Azure OpenAI + AI Search (stubs, not yet referenced)
+│   └── docquery-ui/                # React frontend (Vite) — upload, chat, sources pane
 ├── tests/
-├── docker-compose.yml              # Phase 2
+│   └── DocQuery.Api.Tests/         # Smoke tests — fake providers, no services required
+├── docs/                           # Demo GIF, architecture notes
+├── start.sh                        # Runs API + UI together for local dev
 └── README.md
 ```
 
-Phase 1 keeps everything concrete inside `DocQuery.Api` — the project split happens in the Phase 2 refactor, when there's real behavior worth abstracting.
+The interface/provider split emerged during Phase 1 rather than waiting for Phase 2: the contracts live in `DocQuery.Core`, the Ollama/ChromaDB implementations in `DocQuery.Providers.Local`. What remains for Phase 2 is implementing the same interfaces against Azure (`DocQuery.Providers.Azure` is stubbed but deliberately unreferenced) and the config flag that swaps the stacks.
 
 ---
 

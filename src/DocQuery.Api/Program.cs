@@ -70,7 +70,7 @@ if (app.Environment.IsDevelopment())
 app.UseCors();
 app.MapControllers();
 
-Console.WriteLine($"DocQuery starting with [{provider}] provider");
+app.Logger.LogInformation("DocQuery starting with {Provider} provider", provider);
 app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
 app.Run();
 
