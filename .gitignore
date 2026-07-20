@@ -11,3 +11,4 @@ src/DocQuery.Api/appsettings.json
 node_modules/
 src/docquery-ui/dist/
 Demo.mov
+SETUP-LOG.md
