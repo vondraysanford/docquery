@@ -150,7 +150,7 @@ Azure setup instructions will be added when Phase 2 lands. Everything below runs
 ### Prerequisites
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
-- [Node.js 18+](https://nodejs.org/)
+- [Node.js 22 LTS or newer](https://nodejs.org/) (the UI's build tool, Vite 8, requires Node ≥ 20.19)
 - [Docker](https://www.docker.com/) (for ChromaDB)
 - [Ollama](https://ollama.ai/) installed and running (any Ollama-capable machine works; a GPU helps)
 
@@ -193,6 +193,8 @@ dotnet restore
 dotnet run
 ```
 
+The API listens on `http://localhost:5000` — verify with `curl http://localhost:5000/health`, which should return `{"status":"healthy"}`.
+
 ### 4. Run the frontend
 
 ```bash
@@ -201,7 +203,15 @@ npm install
 npm start
 ```
 
-Open `http://localhost:3000`, upload a PDF or Markdown file, and ask it something.
+Open `http://localhost:3000`, upload a PDF or Markdown file, and ask it something. (The UI dev server proxies `/api` requests to the backend on port 5000 — no extra configuration needed.)
+
+### 5. (Optional) Run the smoke tests
+
+```bash
+dotnet test tests/DocQuery.Api.Tests
+```
+
+The tests use fake providers, so they pass without Ollama, ChromaDB, or Docker running.
 
 ---
 
