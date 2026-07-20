@@ -205,6 +205,8 @@ npm start
 
 Open `http://localhost:3000`, upload a PDF or Markdown file, and ask it something. (The UI dev server proxies `/api` requests to the backend on port 5000 — no extra configuration needed.)
 
+**Shortcut:** once dependencies are installed, `./start.sh` from the repo root runs steps 3 and 4 together in one terminal — Ctrl+C stops both.
+
 ### 5. (Optional) Run the smoke tests
 
 ```bash
