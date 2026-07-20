@@ -8,3 +8,4 @@ src/DocQuery.Api/appsettings.local.json
 CLAUDE.md
 src/DocQuery.Api/appsettings.json
 .claude/settings.json
+node_modules/
