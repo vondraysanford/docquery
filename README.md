@@ -2,7 +2,7 @@
 
 **Ask natural language questions over your documents — powered by local LLMs or Azure OpenAI.**
 
-DocQuery is a retrieval-augmented generation (RAG) application: upload technical documentation or study materials and query them in plain English, with every answer grounded in cited source chunks. Built with a C#/.NET 8 backend and React frontend, designed around a swappable provider architecture that will support both fully local inference (Ollama on an NVIDIA DGX Spark) and Azure AI services.
+DocQuery is a retrieval-augmented generation (RAG) application: upload technical documentation or study materials and query them in plain English, with every answer grounded in cited source chunks. Built with a C#/.NET 10 backend and React frontend, designed around a swappable provider architecture that will support both fully local inference (Ollama on an NVIDIA DGX Spark) and Azure AI services.
 
 > **🚧 Status: In development — Phase 1 (local RAG MVP) in progress.**
 > This README is the build plan as much as the documentation. Nothing is claimed as done unless its box is checked. Follow along: I'm building this in public.
@@ -33,12 +33,12 @@ Each phase ends with something real: a demo, a benchmark table, a feature I use 
 
 **Goal:** the smallest complete RAG loop, running entirely on local hardware, free, demoable offline. No provider abstraction yet — concrete classes, straight-line code.
 
-- [x] .NET 8 Web API skeleton with health check endpoint
+- [x] .NET 10 Web API skeleton with health check endpoint
 - [x] Document ingestion: PDF, Markdown, and plain-text upload → parse → chunk (fixed-size with overlap)
 - [x] Embeddings via Ollama (`nomic-embed-text`)
 - [x] Vector storage in ChromaDB (Docker container)
 - [x] Query pipeline: embed question → top-k retrieval → context assembly → answer via Ollama (Llama 3) → response with source citations
-- [ ] React UI: upload panel, chat, and a sources pane showing exactly which chunks grounded each answer
+- [x] React UI: upload panel, chat, and a sources pane showing exactly which chunks grounded each answer
 - [ ] Smoke tests for the ingestion and query paths
 - [ ] Demo GIF recorded and embedded below
 
@@ -101,7 +101,7 @@ Target architecture (Phase 2+). Phase 1 implements the **Local** path only, with
 └───────────────────────┬─────────────────────────────────┘
                         │ REST API
 ┌───────────────────────▼─────────────────────────────────┐
-│                 .NET 8 Web API                          │
+│                 .NET 10 Web API                         │
 │                                                         │
 │   Ingestion            Retrieval          Generation    │
 │   • parsing            • embedding        • context     │
@@ -135,7 +135,7 @@ Target architecture (Phase 2+). Phase 1 implements the **Local** path only, with
 | Layer | Phase 1 (Local) | Phase 2 adds (Azure mode) |
 |-------|-----------------|---------------------------|
 | Frontend | React, JavaScript, CSS | — |
-| Backend API | C# / .NET 8, ASP.NET Core | provider interfaces in `DocQuery.Core` |
+| Backend API | C# / .NET 10, ASP.NET Core | provider interfaces in `DocQuery.Core` |
 | Vector store | ChromaDB (Docker) | Azure AI Search |
 | Embeddings | Ollama (`nomic-embed-text`) | Azure OpenAI (`text-embedding-ada-002`) |
 | LLM inference | Ollama (Llama 3 — 8B for dev, 70B fits on the Spark) | Azure OpenAI (GPT-4o) |
@@ -149,7 +149,7 @@ Azure setup instructions will be added when Phase 2 lands. Everything below runs
 
 ### Prerequisites
 
-- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
 - [Node.js 18+](https://nodejs.org/)
 - [Docker](https://www.docker.com/) (for ChromaDB)
 - [Ollama](https://ollama.ai/) installed and running (any Ollama-capable machine works; a GPU helps)
