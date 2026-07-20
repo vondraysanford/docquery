@@ -39,7 +39,7 @@ Each phase ends with something real: a demo, a benchmark table, a feature I use 
 - [x] Vector storage in ChromaDB (Docker container)
 - [x] Query pipeline: embed question → top-k retrieval → context assembly → answer via Ollama (Llama 3) → response with source citations
 - [x] React UI: upload panel, chat, and a sources pane showing exactly which chunks grounded each answer
-- [ ] Smoke tests for the ingestion and query paths
+- [x] Smoke tests for the ingestion and query paths
 - [ ] Demo GIF recorded and embedded below
 
 **Done when:** a stranger can clone the repo, follow the Getting Started steps, upload a document, ask a question, and get a cited answer — and there's a GIF at the top of this README proving it.

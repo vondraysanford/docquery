@@ -73,3 +73,6 @@ app.MapControllers();
 Console.WriteLine($"DocQuery starting with [{provider}] provider");
 app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
 app.Run();
+
+// Exposes the implicit Program class to WebApplicationFactory in smoke tests.
+public partial class Program { }
