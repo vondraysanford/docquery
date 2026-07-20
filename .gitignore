@@ -9,3 +9,4 @@ CLAUDE.md
 src/DocQuery.Api/appsettings.json
 .claude/settings.json
 node_modules/
+src/docquery-ui/dist/
