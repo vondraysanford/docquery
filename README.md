@@ -205,6 +205,8 @@ npm start
 
 Open `http://localhost:3000`, upload a PDF or Markdown file, and ask it something. (The UI dev server proxies `/api` requests to the backend on port 5000 — no extra configuration needed.)
 
+Need a document to try? The repo ships a small sample corpus in [`docs/samples/`](docs/samples/) — my resume, project notes, and certification history. Upload a file or two and ask things like *"What Azure experience does Vondray have?"* or *"Why was DocQuery built in C# instead of Python?"* — the sources pane will show exactly which chunks grounded the answer.
+
 **Shortcut:** once dependencies are installed, `./start.sh` from the repo root runs steps 3 and 4 together in one terminal — Ctrl+C stops both.
 
 ### 5. (Optional) Run the smoke tests
