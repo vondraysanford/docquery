@@ -1,3 +1,4 @@
+using DocQuery.Api.Services;
 using DocQuery.Core.Interfaces;
 using DocQuery.Core.Models;
 using DocQuery.Core.Services;
@@ -28,19 +29,35 @@ public class DocumentsController : ControllerBase
 
     /// <summary>
     /// Upload a document for ingestion into the RAG pipeline.
-    /// Accepts plain text content in the request body.
+    /// Accepts a PDF, Markdown, or plain-text file as multipart/form-data.
     /// </summary>
     [HttpPost("upload")]
-    public async Task<IActionResult> Upload([FromBody] UploadRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> Upload(IFormFile? file, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(request.Content))
-            return BadRequest("Content is required.");
+        if (file is null || file.Length == 0)
+            return BadRequest("A non-empty file is required.");
 
-        // 1. Create document record
+        if (!DocumentTextExtractor.IsSupported(file.FileName))
+            return BadRequest("Unsupported file type. Upload a .pdf, .md, or .txt file.");
+
+        // 1. Parse the file into plain text
+        string content;
+        try
+        {
+            content = await DocumentTextExtractor.ExtractAsync(file, cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return BadRequest($"Could not parse '{file.FileName}': {ex.Message}");
+        }
+
+        if (string.IsNullOrWhiteSpace(content))
+            return BadRequest($"No text could be extracted from '{file.FileName}'.");
+
         var document = new Document
         {
-            FileName = request.FileName ?? "untitled.txt",
-            Content = request.Content
+            FileName = file.FileName,
+            Content = content
         };
 
         // 2. Chunk the document
@@ -106,10 +123,4 @@ public class DocumentsController : ControllerBase
 
         return NoContent();
     }
-}
-
-public class UploadRequest
-{
-    public string? FileName { get; set; }
-    public string Content { get; set; } = string.Empty;
 }

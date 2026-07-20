@@ -15,6 +15,8 @@ if (provider.Equals("Local", StringComparison.OrdinalIgnoreCase))
     // Local mode: Ollama + ChromaDB
     builder.Services.Configure<OllamaOptions>(
         builder.Configuration.GetSection(OllamaOptions.SectionName));
+    builder.Services.Configure<ChromaDbOptions>(
+        builder.Configuration.GetSection(ChromaDbOptions.SectionName));
 
     builder.Services.AddHttpClient<IEmbeddingProvider, OllamaEmbeddingProvider>();
     builder.Services.AddHttpClient<ILlmProvider, OllamaLlmProvider>();

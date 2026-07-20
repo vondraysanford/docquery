@@ -2,34 +2,43 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using DocQuery.Core.Interfaces;
 using DocQuery.Core.Models;
+using Microsoft.Extensions.Options;
 
 namespace DocQuery.Providers.Local;
 
 /// <summary>
 /// Vector store implementation using ChromaDB (local, Docker-based).
 /// Reference implementation — use this pattern for AzureSearchVectorStore.
-/// 
-/// ChromaDB API: https://docs.trychroma.com/reference
-/// Assumes ChromaDB is running on http://localhost:8000
+///
+/// Targets the Chroma v2 API (v1 returns 410 Gone on current server builds):
+/// https://docs.trychroma.com/reference
 /// </summary>
 public class ChromaVectorStore : IVectorStore
 {
     private readonly HttpClient _httpClient;
     private const string CollectionName = "docquery";
+    private const string ApiBase = "/api/v2/tenants/default_tenant/databases/default_database";
     private string? _collectionId;
 
-    public ChromaVectorStore(HttpClient httpClient)
+    public ChromaVectorStore(HttpClient httpClient, IOptions<ChromaDbOptions> options)
     {
         _httpClient = httpClient;
-        _httpClient.BaseAddress = new Uri("http://localhost:8000");
+        _httpClient.BaseAddress = new Uri(options.Value.BaseUrl);
     }
 
     private async Task EnsureCollectionAsync(CancellationToken cancellationToken)
     {
         if (_collectionId != null) return;
 
-        var request = new { name = CollectionName, get_or_create = true };
-        var response = await _httpClient.PostAsJsonAsync("/api/v1/collections", request, cancellationToken);
+        // Cosine space: nomic-embed-text vectors are compared by cosine similarity,
+        // and it keeps the distance→score conversion in SearchAsync meaningful.
+        var request = new
+        {
+            name = CollectionName,
+            get_or_create = true,
+            configuration = new { hnsw = new { space = "cosine" } }
+        };
+        var response = await _httpClient.PostAsJsonAsync($"{ApiBase}/collections", request, cancellationToken);
         response.EnsureSuccessStatusCode();
 
         var result = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken);
@@ -53,7 +62,7 @@ public class ChromaVectorStore : IVectorStore
         };
 
         var response = await _httpClient.PostAsJsonAsync(
-            $"/api/v1/collections/{_collectionId}/add", request, cancellationToken);
+            $"{ApiBase}/collections/{_collectionId}/add", request, cancellationToken);
         response.EnsureSuccessStatusCode();
     }
 
@@ -72,7 +81,7 @@ public class ChromaVectorStore : IVectorStore
         };
 
         var response = await _httpClient.PostAsJsonAsync(
-            $"/api/v1/collections/{_collectionId}/query", request, cancellationToken);
+            $"{ApiBase}/collections/{_collectionId}/query", request, cancellationToken);
         response.EnsureSuccessStatusCode();
 
         var result = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken);
@@ -86,15 +95,24 @@ public class ChromaVectorStore : IVectorStore
         for (int i = 0; i < documents.GetArrayLength(); i++)
         {
             var metadata = metadatas[i];
+
+            var metadataDict = new Dictionary<string, string>();
+            foreach (var property in metadata.EnumerateObject())
+            {
+                if (property.Value.ValueKind == JsonValueKind.String)
+                    metadataDict[property.Name] = property.Value.GetString() ?? "";
+            }
+
             chunks.Add(new RetrievedChunk
             {
-                Score = 1.0 - distances[i].GetDouble(), // ChromaDB returns distance; convert to similarity
+                Score = 1.0 - distances[i].GetDouble(), // cosine distance → similarity
                 Chunk = new DocumentChunk
                 {
                     Id = ids[i].GetString() ?? "",
                     Content = documents[i].GetString() ?? "",
-                    DocumentId = metadata.TryGetProperty("documentId", out var docId) ? docId.GetString() ?? "" : "",
-                    ChunkIndex = metadata.TryGetProperty("chunkIndex", out var idx) ? int.Parse(idx.GetString() ?? "0") : 0
+                    DocumentId = metadataDict.GetValueOrDefault("documentId", ""),
+                    ChunkIndex = int.TryParse(metadataDict.GetValueOrDefault("chunkIndex"), out var idx) ? idx : 0,
+                    Metadata = metadataDict
                 }
             });
         }
@@ -112,7 +130,7 @@ public class ChromaVectorStore : IVectorStore
         };
 
         var response = await _httpClient.PostAsJsonAsync(
-            $"/api/v1/collections/{_collectionId}/delete", request, cancellationToken);
+            $"{ApiBase}/collections/{_collectionId}/delete", request, cancellationToken);
         response.EnsureSuccessStatusCode();
     }
 }
