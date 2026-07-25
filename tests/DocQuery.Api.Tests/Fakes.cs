@@ -53,9 +53,19 @@ public class FakeLlmProvider : ILlmProvider
 {
     public const string CannedAnswer = "This is a canned answer grounded in the provided context.";
 
+    /// <summary>Deep copy of the conversation received on the most recent call.</summary>
+    public List<ChatMessage>? LastConversation { get; private set; }
+
     public Task<string> GenerateCompletionAsync(string systemPrompt, string userMessage, CancellationToken cancellationToken = default)
-        => Task.FromResult(CannedAnswer);
+        => GenerateCompletionAsync(systemPrompt,
+            new List<ChatMessage> { new() { Role = "user", Content = userMessage } },
+            cancellationToken);
 
     public Task<string> GenerateCompletionAsync(string systemPrompt, List<ChatMessage> conversationHistory, CancellationToken cancellationToken = default)
-        => Task.FromResult(CannedAnswer);
+    {
+        LastConversation = conversationHistory
+            .Select(m => new ChatMessage { Role = m.Role, Content = m.Content })
+            .ToList();
+        return Task.FromResult(CannedAnswer);
+    }
 }

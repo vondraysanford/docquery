@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using DocQuery.Core.Interfaces;
 using DocQuery.Core.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -12,8 +13,11 @@ public class QueryController : ControllerBase
     private readonly ILlmProvider _llmProvider;
     private readonly IVectorStore _vectorStore;
 
-    // Simple in-memory conversation store
-    private static readonly Dictionary<string, List<ChatMessage>> _conversations = new();
+    // Session-scoped in-memory conversation store: survives across requests,
+    // forgotten on restart. Capped per conversation so long sessions can't
+    // outgrow the model's context window (or inflate Azure token costs).
+    private static readonly ConcurrentDictionary<string, List<ChatMessage>> _conversations = new();
+    private const int MaxHistoryMessages = 20; // 10 question/answer exchanges
 
     private const string SystemPrompt = """
         You are a helpful study assistant. Answer the user's question based ONLY on the 
@@ -75,20 +79,30 @@ public class QueryController : ControllerBase
 
         var prompt = SystemPrompt.Replace("{context}", context);
 
-        // 4. Get or create conversation history
+        // 4. Get or create conversation history. The list is locked around
+        //    mutations and snapshotted for the LLM call, so concurrent
+        //    requests on the same conversation can't corrupt it.
         var conversationId = request.ConversationId ?? Guid.NewGuid().ToString();
-        if (!_conversations.ContainsKey(conversationId))
-            _conversations[conversationId] = new List<ChatMessage>();
+        var history = _conversations.GetOrAdd(conversationId, _ => new List<ChatMessage>());
 
-        var history = _conversations[conversationId];
-        history.Add(new ChatMessage { Role = "user", Content = request.Question });
+        List<ChatMessage> historySnapshot;
+        lock (history)
+        {
+            history.Add(new ChatMessage { Role = "user", Content = request.Question });
+            TrimToCap(history);
+            historySnapshot = new List<ChatMessage>(history);
+        }
 
         // 5. Generate answer
         var answer = await _llmProvider.GenerateCompletionAsync(
-            prompt, history, cancellationToken);
+            prompt, historySnapshot, cancellationToken);
 
         // 6. Store assistant response in history
-        history.Add(new ChatMessage { Role = "assistant", Content = answer });
+        lock (history)
+        {
+            history.Add(new ChatMessage { Role = "assistant", Content = answer });
+            TrimToCap(history);
+        }
 
         // 7. Build response with sources
         var response = new QueryResponse
@@ -106,5 +120,11 @@ public class QueryController : ControllerBase
         };
 
         return Ok(response);
+    }
+
+    private static void TrimToCap(List<ChatMessage> history)
+    {
+        if (history.Count > MaxHistoryMessages)
+            history.RemoveRange(0, history.Count - MaxHistoryMessages);
     }
 }

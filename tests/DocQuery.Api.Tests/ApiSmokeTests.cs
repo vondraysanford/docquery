@@ -27,9 +27,13 @@ public class ApiSmokeTests : IClassFixture<ApiSmokeTests.TestAppFactory>
                 services.RemoveAll<ILlmProvider>();
                 services.RemoveAll<IVectorStore>();
 
+                // Fakes registered as concrete singletons too, so tests can
+                // resolve them and inspect what the controllers passed in.
+                services.AddSingleton<FakeLlmProvider>();
+                services.AddSingleton<FakeVectorStore>();
                 services.AddSingleton<IEmbeddingProvider, FakeEmbeddingProvider>();
-                services.AddSingleton<ILlmProvider, FakeLlmProvider>();
-                services.AddSingleton<IVectorStore, FakeVectorStore>();
+                services.AddSingleton<ILlmProvider>(sp => sp.GetRequiredService<FakeLlmProvider>());
+                services.AddSingleton<IVectorStore>(sp => sp.GetRequiredService<FakeVectorStore>());
             });
         }
     }
