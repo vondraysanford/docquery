@@ -61,11 +61,13 @@ Each phase ends with something real: a demo, a benchmark table, a feature I use 
 
 | Metric | Local (Llama 3 8B) | Local (Llama 3 70B) | Azure (gpt-5-mini) |
 |--------|--------------------|---------------------|----------------|
-| Inference speed (tok/s) | — | — | — |
-| Embedding throughput (docs/min) | — | — | — |
-| Average query latency | — | — | — |
-| Cost per 1K queries | $0 | $0 | — |
+| Inference speed (tok/s) | 57.4 | — | 85.2 |
+| Embedding throughput (docs/min) | 287 | — | 152 |
+| Average query latency | 2.4 s (p95 5.2 s) | — | 4.3 s (p95 6.0 s) |
+| Cost per 1K queries | $0 | $0 | ~$1.83 (estimated) |
 | Answer quality (subjective notes) | — | — | — |
+
+<sup>Measured 2026-07-25 with `benchmarks/run_benchmark.py` over the `docs/samples/` corpus (10 questions × 2 passes, tok/s averaged over 3 runs; MacBook M-series for local, East US for Azure). Azure cost estimated from measured token usage × list prices, pending cross-check against billing actuals. The 70B column awaits the DGX Spark over an SSH tunnel — same script, different config.</sup>
 
 **Done when:** the same UI runs against both stacks by changing one config value, and every cell in that table holds a measured number — the local-vs-Azure comparison is the most interesting output of this whole project.
 

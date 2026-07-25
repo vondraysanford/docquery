@@ -1,0 +1,16 @@
+{
+  "Local (Llama 3 8B)": {
+    "inference_tok_s": 57.4,
+    "embedding_docs_per_min": 287.0,
+    "query_latency_mean_s": 2.38,
+    "query_latency_p95_s": 5.2,
+    "cost_per_1k_queries_usd": null
+  },
+  "Azure (gpt-5-mini)": {
+    "inference_tok_s": 85.2,
+    "embedding_docs_per_min": 152.4,
+    "query_latency_mean_s": 4.29,
+    "query_latency_p95_s": 5.98,
+    "cost_per_1k_queries_usd": 1.83
+  }
+}
