@@ -10,6 +10,7 @@
   <ItemGroup>
     <ProjectReference Include="..\DocQuery.Core\DocQuery.Core.csproj" />
     <ProjectReference Include="..\DocQuery.Providers.Local\DocQuery.Providers.Local.csproj" />
+    <ProjectReference Include="..\DocQuery.Providers.Azure\DocQuery.Providers.Azure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

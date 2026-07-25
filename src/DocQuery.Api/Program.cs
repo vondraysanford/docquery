@@ -1,5 +1,6 @@
 using DocQuery.Core.Interfaces;
 using DocQuery.Core.Services;
+using DocQuery.Providers.Azure;
 using DocQuery.Providers.Local;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -25,19 +26,14 @@ if (provider.Equals("Local", StringComparison.OrdinalIgnoreCase))
 else if (provider.Equals("Azure", StringComparison.OrdinalIgnoreCase))
 {
     // Azure mode: Azure OpenAI + Azure AI Search
-    // TODO: Register your Azure providers here once implemented:
-    //
-    // builder.Services.Configure<AzureOpenAIOptions>(
-    //     builder.Configuration.GetSection("DocQuery:Azure:OpenAI"));
-    // builder.Services.Configure<AzureSearchOptions>(
-    //     builder.Configuration.GetSection("DocQuery:Azure:Search"));
-    //
-    // builder.Services.AddSingleton<IEmbeddingProvider, AzureOpenAIEmbeddingProvider>();
-    // builder.Services.AddSingleton<ILlmProvider, AzureOpenAILlmProvider>();
-    // builder.Services.AddSingleton<IVectorStore, AzureSearchVectorStore>();
+    builder.Services.Configure<AzureOpenAIOptions>(
+        builder.Configuration.GetSection(AzureOpenAIOptions.SectionName));
+    builder.Services.Configure<AzureSearchOptions>(
+        builder.Configuration.GetSection(AzureSearchOptions.SectionName));
 
-    throw new InvalidOperationException(
-        "Azure provider not yet implemented. Set Provider to 'Local' or implement the Azure providers in DocQuery.Providers.Azure.");
+    builder.Services.AddSingleton<IEmbeddingProvider, AzureOpenAIEmbeddingProvider>();
+    builder.Services.AddSingleton<ILlmProvider, AzureOpenAILlmProvider>();
+    builder.Services.AddSingleton<IVectorStore, AzureSearchVectorStore>();
 }
 else
 {
