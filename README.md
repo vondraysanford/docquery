@@ -56,7 +56,7 @@ Each phase ends with something real: a demo, a benchmark table, a feature I use 
 - [x] `DocQuery.Providers.Azure`: Azure OpenAI (embeddings + chat) and Azure AI Search (vector store)
 - [x] Provider switching via `appsettings.json` — no code changes to flip modes
 - [x] Session-scoped conversation memory (follow-up questions keep context)
-- [ ] `docker-compose.yml` for one-command local stack
+- [x] `docker-compose.yml` for one-command local stack
 - [ ] **Benchmarks:** fill the table below with real measurements
 
 | Metric | Local (Llama 3 8B) | Local (Llama 3 70B) | Azure (gpt-5-mini) |
@@ -180,10 +180,17 @@ cp src/DocQuery.Api/appsettings.example.json src/DocQuery.Api/appsettings.json
 ### 2. Start dependencies
 
 ```bash
-docker run -d -p 8000:8000 chromadb/chroma
 ollama pull llama3
 ollama pull nomic-embed-text
 ```
+
+**One-command stack (Docker Compose):** with the Ollama app running, this builds and starts ChromaDB, the API, and the UI together — then open `http://localhost:3000`:
+
+```bash
+docker compose up --build
+```
+
+The API is published on host port 5050 (macOS AirPlay occupies 5000), ChromaDB's vectors persist in a named volume across container restarts, and Ollama deliberately stays on the host so it can use the GPU. Prefer running things directly? Steps 3–4 below are the non-Docker dev path (start ChromaDB alone with `docker compose up -d chromadb`).
 
 ### 3. Run the backend
 
@@ -236,7 +243,8 @@ docquery/
 ├── tests/
 │   └── DocQuery.Api.Tests/         # Smoke tests — fake providers, no services required
 ├── docs/                           # Demo GIF, architecture notes
-├── start.sh                        # Runs API + UI together for local dev
+├── docker-compose.yml              # One-command stack: ChromaDB + API + UI (Ollama stays on host)
+├── start.sh                        # Runs API + UI together for local dev (no containers)
 └── README.md
 ```
 

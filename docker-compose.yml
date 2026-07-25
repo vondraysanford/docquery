@@ -1,0 +1,50 @@
+# One-command local stack: ChromaDB + API + UI.
+#
+#   1. Start the Ollama app (it stays on the host — containers on macOS
+#      can't reach the GPU, and on a server Ollama is the host GPU service)
+#   2. docker compose up --build
+#   3. Open http://localhost:3000
+#
+# Server deployment (e.g. DGX Spark behind a Cloudflare Tunnel, with the UI
+# on Cloudflare Pages instead): docker compose up -d chromadb api
+
+services:
+  chromadb:
+    # Pinned to the exact image verified against our v2 client (pulled 2026-07-19).
+    image: chromadb/chroma@sha256:1e0b73a187a28757c572acba508c46f48c9e8b0acaf5c20e6d95cdedce1acdf6
+    ports:
+      - "8000:8000"
+    volumes:
+      # Named volume: vectors survive container recreation.
+      - chroma-data:/data
+
+  api:
+    build:
+      context: .
+      dockerfile: src/DocQuery.Api/Dockerfile
+    ports:
+      # Host port 5050: macOS AirPlay Receiver squats host port 5000, and
+      # Docker can't share it the way Kestrel does. In-network traffic
+      # (ui → api) still uses 5000.
+      - "5050:5000"
+    environment:
+      DocQuery__Provider: "Local"
+      DocQuery__Ollama__BaseUrl: "http://host.docker.internal:11434"
+      DocQuery__ChromaDb__BaseUrl: "http://chromadb:8000"
+    extra_hosts:
+      # Makes host.docker.internal resolve on plain Linux hosts too;
+      # harmless no-op on Docker Desktop.
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - chromadb
+
+  ui:
+    build:
+      context: ./src/docquery-ui
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+
+volumes:
+  chroma-data:

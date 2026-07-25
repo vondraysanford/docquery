@@ -1,0 +1,19 @@
+# Never bake local config/secrets into images
+src/DocQuery.Api/appsettings.json
+
+# Build artifacts and caches
+**/bin/
+**/obj/
+**/node_modules/
+**/dist/
+
+# Not needed in any image
+.git/
+.claude/
+.vscode/
+docs/
+tests/
+Demo.mov
+SETUP-LOG.md
+start.sh
+*.md
