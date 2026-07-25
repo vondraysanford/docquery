@@ -1,60 +1,44 @@
+using Azure;
+using Azure.AI.OpenAI;
 using DocQuery.Core.Interfaces;
+using Microsoft.Extensions.Options;
+using OpenAI.Embeddings;
 
 namespace DocQuery.Providers.Azure;
 
 /// <summary>
-/// ╔══════════════════════════════════════════════════════════════════╗
-/// ║  YOUR TURN — AI-102 PRACTICE                                    ║
-/// ║                                                                  ║
-/// ║  Implement this class using the Azure.AI.OpenAI SDK.             ║
-/// ║  Use OllamaEmbeddingProvider as your reference pattern.          ║
-/// ╚══════════════════════════════════════════════════════════════════╝
-/// 
-/// STEP-BY-STEP GUIDE:
-/// 
-/// 1. Uncomment the NuGet packages in DocQuery.Providers.Azure.csproj
-///    and run: dotnet restore
-/// 
-/// 2. Create an AzureOpenAIOptions class (like OllamaOptions) with:
-///    - Endpoint (string)
-///    - ApiKey (string)  
-///    - EmbeddingDeployment (string) — e.g., "text-embedding-ada-002"
-///    - ChatDeployment (string) — e.g., "gpt-4o"
-/// 
-/// 3. Implement GenerateEmbeddingAsync:
-///    - Create an AzureOpenAIClient with your endpoint + key
-///    - Call client.GetEmbeddingClient(deploymentName)
-///    - Call embeddingClient.GenerateEmbeddingAsync(text)
-///    - Return the embedding vector as float[]
-/// 
-/// 4. Implement GenerateEmbeddingsAsync:
-///    - Azure OpenAI supports batch embeddings natively!
-///    - Call embeddingClient.GenerateEmbeddingsAsync(texts) 
-///    - Much faster than the Ollama sequential approach
-/// 
-/// KEY DIFFERENCES FROM OLLAMA (great interview talking point):
-///   - Azure supports batch embedding (Ollama doesn't)
-///   - Azure has built-in content filtering
-///   - Azure requires explicit deployment names (not just model names)
-///   - Azure uses API key or Azure AD auth (Ollama has no auth)
-/// 
-/// DOCS:
-///   https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/embeddings
-///   https://learn.microsoft.com/en-us/dotnet/api/azure.ai.openai
+/// Generates embeddings using an Azure OpenAI deployment (provisioned via
+/// Azure AI Foundry), behind the same IEmbeddingProvider contract as the
+/// Ollama implementation.
+///
+/// Key difference from Ollama: Azure embeds a whole batch in one call,
+/// where Ollama requires one request per text.
 /// </summary>
 public class AzureOpenAIEmbeddingProvider : IEmbeddingProvider
 {
-    public Task<float[]> GenerateEmbeddingAsync(string text, CancellationToken cancellationToken = default)
+    private readonly EmbeddingClient _client;
+
+    public AzureOpenAIEmbeddingProvider(IOptions<AzureOpenAIOptions> options)
     {
-        // TODO: Implement using Azure.AI.OpenAI SDK
-        throw new NotImplementedException(
-            "Implement this! See the XML docs above for step-by-step guidance.");
+        var config = options.Value;
+        var azureClient = new AzureOpenAIClient(
+            new Uri(config.Endpoint),
+            new AzureKeyCredential(config.ApiKey));
+        _client = azureClient.GetEmbeddingClient(config.EmbeddingDeployment);
     }
 
-    public Task<List<float[]>> GenerateEmbeddingsAsync(List<string> texts, CancellationToken cancellationToken = default)
+    public async Task<float[]> GenerateEmbeddingAsync(string text, CancellationToken cancellationToken = default)
     {
-        // TODO: Implement using Azure.AI.OpenAI SDK (batch endpoint)
-        throw new NotImplementedException(
-            "Implement this! Azure supports native batch embeddings — faster than Ollama.");
+        var response = await _client.GenerateEmbeddingAsync(text, cancellationToken: cancellationToken);
+        return response.Value.ToFloats().ToArray();
+    }
+
+    public async Task<List<float[]>> GenerateEmbeddingsAsync(List<string> texts, CancellationToken cancellationToken = default)
+    {
+        var response = await _client.GenerateEmbeddingsAsync(texts, cancellationToken: cancellationToken);
+        return response.Value
+            .OrderBy(embedding => embedding.Index)
+            .Select(embedding => embedding.ToFloats().ToArray())
+            .ToList();
     }
 }

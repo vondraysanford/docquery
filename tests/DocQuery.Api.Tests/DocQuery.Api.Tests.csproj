@@ -18,6 +18,7 @@
     <ProjectReference Include="..\..\src\DocQuery.Api\DocQuery.Api.csproj" />
     <ProjectReference Include="..\..\src\DocQuery.Core\DocQuery.Core.csproj" />
     <ProjectReference Include="..\..\src\DocQuery.Providers.Local\DocQuery.Providers.Local.csproj" />
+    <ProjectReference Include="..\..\src\DocQuery.Providers.Azure\DocQuery.Providers.Azure.csproj" />
   </ItemGroup>
 
 </Project>

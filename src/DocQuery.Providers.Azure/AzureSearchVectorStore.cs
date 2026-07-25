@@ -1,95 +1,174 @@
+using Azure;
+using Azure.Search.Documents;
+using Azure.Search.Documents.Indexes;
+using Azure.Search.Documents.Indexes.Models;
+using Azure.Search.Documents.Models;
 using DocQuery.Core.Interfaces;
 using DocQuery.Core.Models;
+using Microsoft.Extensions.Options;
 
 namespace DocQuery.Providers.Azure;
 
 /// <summary>
-/// ╔══════════════════════════════════════════════════════════════════╗
-/// ║  YOUR TURN — AI-102 PRACTICE                                    ║
-/// ║                                                                  ║
-/// ║  Implement this class using the Azure.Search.Documents SDK.      ║
-/// ║  Use ChromaVectorStore as your reference pattern.                 ║
-/// ╚══════════════════════════════════════════════════════════════════╝
-/// 
-/// This is the most complex provider to implement and covers the most
-/// AI-102 exam material. Take your time with this one.
+/// Vector store implementation using Azure AI Search, behind the same
+/// IVectorStore contract as the ChromaDB implementation.
 ///
-/// STEP-BY-STEP GUIDE:
-///
-/// 1. Create an AzureSearchOptions class with:
-///    - Endpoint (string)
-///    - ApiKey (string)
-///    - IndexName (string) — e.g., "docquery-index"
-///
-/// 2. Create a SearchIndexClient to manage the index:
-///    - Define a SearchIndex with fields:
-///      • id (string, key)
-///      • content (string, searchable)
-///      • documentId (string, filterable)
-///      • chunkIndex (int)
-///      • embedding (Collection(Edm.Single), vector searchable)
-///    - Configure a vector search profile with HNSW algorithm
-///    - Call indexClient.CreateOrUpdateIndexAsync()
-///
-/// 3. Implement StoreChunksAsync:
-///    - Create a SearchClient for the index
-///    - Map DocumentChunks to your index document model
-///    - Call searchClient.IndexDocumentsAsync() with MergeOrUpload action
-///
-/// 4. Implement SearchAsync:
-///    - Use SearchOptions with VectorSearch configured
-///    - Create a VectorizedQuery with your query embedding
-///    - Call searchClient.SearchAsync()
-///    - Map results back to RetrievedChunk
-///
-/// 5. Implement DeleteDocumentAsync:
-///    - Search for all chunks with matching documentId filter
-///    - Call searchClient.IndexDocumentsAsync() with Delete action
-///
-/// AI-102 EXAM TOPICS THIS COVERS:
-///   - Creating and configuring Azure AI Search indexes
-///   - Vector search profiles and algorithms (HNSW vs exhaustive KNN)
-///   - Index document schema design
-///   - Hybrid search (vector + keyword) — BONUS if you implement this
-///   - Filtering and faceting
-///   - Indexers and skillsets (not needed here, but know the concepts)
-///
-/// KEY DIFFERENCES FROM CHROMADB (great interview talking point):
-///   - Azure AI Search supports hybrid search (vector + BM25 keyword)
-///   - Azure has built-in semantic ranking
-///   - Azure supports complex filtering with OData expressions
-///   - Azure scales horizontally with replicas and partitions
-///   - ChromaDB is simpler but limited to vector-only search
-///
-/// DOCS:
-///   https://learn.microsoft.com/en-us/azure/search/vector-search-overview
-///   https://learn.microsoft.com/en-us/azure/search/search-get-started-vector
-///   https://learn.microsoft.com/en-us/dotnet/api/azure.search.documents
+/// Key differences from ChromaDB: the index schema is explicit (defined below
+/// and created on first use), filtering uses OData expressions, and the same
+/// index could serve hybrid vector + keyword search later.
 /// </summary>
 public class AzureSearchVectorStore : IVectorStore
 {
-    public Task StoreChunksAsync(List<DocumentChunk> chunks, CancellationToken cancellationToken = default)
+    private const string VectorProfile = "docquery-vector-profile";
+    private const string HnswAlgorithm = "docquery-hnsw";
+
+    private readonly SearchIndexClient _indexClient;
+    private readonly SearchClient _searchClient;
+    private readonly AzureSearchOptions _options;
+    private bool _indexEnsured;
+
+    public AzureSearchVectorStore(IOptions<AzureSearchOptions> options)
     {
-        // TODO: Implement using Azure.Search.Documents SDK
-        throw new NotImplementedException(
-            "Implement this! This is the meatiest provider — see the XML docs above.");
+        _options = options.Value;
+        var endpoint = new Uri(_options.Endpoint);
+        var credential = new AzureKeyCredential(_options.ApiKey);
+        _indexClient = new SearchIndexClient(endpoint, credential);
+        _searchClient = new SearchClient(endpoint, _options.IndexName, credential);
     }
 
-    public Task<List<RetrievedChunk>> SearchAsync(
+    private async Task EnsureIndexAsync(CancellationToken cancellationToken)
+    {
+        if (_indexEnsured) return;
+
+        var index = new SearchIndex(_options.IndexName)
+        {
+            Fields =
+            {
+                new SimpleField("id", SearchFieldDataType.String) { IsKey = true },
+                new SearchableField("content"),
+                new SimpleField("documentId", SearchFieldDataType.String) { IsFilterable = true },
+                new SimpleField("chunkIndex", SearchFieldDataType.Int32),
+                new SimpleField("fileName", SearchFieldDataType.String),
+                new SearchField("embedding", SearchFieldDataType.Collection(SearchFieldDataType.Single))
+                {
+                    IsSearchable = true,
+                    VectorSearchDimensions = _options.VectorDimensions,
+                    VectorSearchProfileName = VectorProfile,
+                },
+            },
+            VectorSearch = new VectorSearch
+            {
+                Profiles = { new VectorSearchProfile(VectorProfile, HnswAlgorithm) },
+                Algorithms =
+                {
+                    new HnswAlgorithmConfiguration(HnswAlgorithm)
+                    {
+                        Parameters = new HnswParameters { Metric = VectorSearchAlgorithmMetric.Cosine },
+                    },
+                },
+            },
+        };
+
+        await _indexClient.CreateOrUpdateIndexAsync(index, cancellationToken: cancellationToken);
+        _indexEnsured = true;
+    }
+
+    public async Task StoreChunksAsync(List<DocumentChunk> chunks, CancellationToken cancellationToken = default)
+    {
+        await EnsureIndexAsync(cancellationToken);
+
+        var documents = chunks.Select(chunk => new SearchDocument
+        {
+            ["id"] = chunk.Id,
+            ["content"] = chunk.Content,
+            ["documentId"] = chunk.DocumentId,
+            ["chunkIndex"] = chunk.ChunkIndex,
+            ["fileName"] = chunk.Metadata.GetValueOrDefault("fileName", ""),
+            ["embedding"] = chunk.Embedding,
+        });
+
+        var batch = IndexDocumentsBatch.MergeOrUpload(documents);
+        await _searchClient.IndexDocumentsAsync(batch, cancellationToken: cancellationToken);
+    }
+
+    public async Task<List<RetrievedChunk>> SearchAsync(
         float[] queryEmbedding,
         int topK = 5,
         CancellationToken cancellationToken = default)
     {
-        // TODO: Implement vector search
-        // BONUS: Implement hybrid search (vector + keyword) for better results
-        throw new NotImplementedException(
-            "Implement this! Use VectorizedQuery with your embedding.");
+        await EnsureIndexAsync(cancellationToken);
+
+        var searchOptions = new SearchOptions
+        {
+            Size = topK,
+            VectorSearch = new VectorSearchOptions
+            {
+                Queries =
+                {
+                    new VectorizedQuery(queryEmbedding)
+                    {
+                        KNearestNeighborsCount = topK,
+                        Fields = { "embedding" },
+                    },
+                },
+            },
+        };
+
+        var response = await _searchClient.SearchAsync<SearchDocument>(
+            searchText: null, searchOptions, cancellationToken);
+
+        var chunks = new List<RetrievedChunk>();
+        await foreach (var result in response.Value.GetResultsAsync())
+        {
+            var document = result.Document;
+            var metadata = new Dictionary<string, string>
+            {
+                ["fileName"] = document.GetString("fileName") ?? "",
+                ["documentId"] = document.GetString("documentId") ?? "",
+                ["chunkIndex"] = document.GetInt32("chunkIndex")?.ToString() ?? "0",
+            };
+
+            chunks.Add(new RetrievedChunk
+            {
+                // Azure returns a similarity score (higher = closer) for cosine.
+                Score = result.Score ?? 0,
+                Chunk = new DocumentChunk
+                {
+                    Id = document.GetString("id") ?? "",
+                    Content = document.GetString("content") ?? "",
+                    DocumentId = metadata["documentId"],
+                    ChunkIndex = int.TryParse(metadata["chunkIndex"], out var index) ? index : 0,
+                    Metadata = metadata,
+                },
+            });
+        }
+
+        return chunks.OrderByDescending(c => c.Score).ToList();
     }
 
-    public Task DeleteDocumentAsync(string documentId, CancellationToken cancellationToken = default)
+    public async Task DeleteDocumentAsync(string documentId, CancellationToken cancellationToken = default)
     {
-        // TODO: Filter by documentId, then delete matching documents
-        throw new NotImplementedException(
-            "Implement this! Use OData filter: documentId eq 'value'");
+        await EnsureIndexAsync(cancellationToken);
+
+        // OData filter; single quotes in the id are escaped by doubling.
+        var filter = $"documentId eq '{documentId.Replace("'", "''")}'";
+        var findOptions = new SearchOptions { Filter = filter, Size = 1000 };
+        findOptions.Select.Add("id");
+
+        var response = await _searchClient.SearchAsync<SearchDocument>(
+            searchText: null, findOptions, cancellationToken);
+
+        var ids = new List<string>();
+        await foreach (var result in response.Value.GetResultsAsync())
+        {
+            var id = result.Document.GetString("id");
+            if (!string.IsNullOrEmpty(id))
+                ids.Add(id);
+        }
+
+        if (ids.Count == 0) return;
+
+        var batch = IndexDocumentsBatch.Delete("id", ids);
+        await _searchClient.IndexDocumentsAsync(batch, cancellationToken: cancellationToken);
     }
 }
