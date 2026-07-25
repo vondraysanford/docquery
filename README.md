@@ -52,14 +52,14 @@ Each phase ends with something real: a demo, a benchmark table, a feature I use 
 
 **Goal:** extract the abstraction Phase 1 deliberately skipped, then implement it twice. One config flag switches the entire stack between local and Azure.
 
-- [ ] Extract `IEmbeddingProvider`, `ILlmProvider`, and `IVectorStore` interfaces into `DocQuery.Core`; move Ollama/ChromaDB implementations into `DocQuery.Providers.Local`
-- [ ] `DocQuery.Providers.Azure`: Azure OpenAI (embeddings + chat) and Azure AI Search (vector store)
-- [ ] Provider switching via `appsettings.json` — no code changes to flip modes
-- [ ] Session-scoped conversation memory (follow-up questions keep context)
+- [x] Extract `IEmbeddingProvider`, `ILlmProvider`, and `IVectorStore` interfaces into `DocQuery.Core`; move Ollama/ChromaDB implementations into `DocQuery.Providers.Local` *(landed early, during Phase 1 — see Project Structure)*
+- [x] `DocQuery.Providers.Azure`: Azure OpenAI (embeddings + chat) and Azure AI Search (vector store)
+- [x] Provider switching via `appsettings.json` — no code changes to flip modes
+- [x] Session-scoped conversation memory (follow-up questions keep context)
 - [ ] `docker-compose.yml` for one-command local stack
 - [ ] **Benchmarks:** fill the table below with real measurements
 
-| Metric | Local (Llama 3 8B) | Local (Llama 3 70B) | Azure (GPT-4o) |
+| Metric | Local (Llama 3 8B) | Local (Llama 3 70B) | Azure (gpt-5-mini) |
 |--------|--------------------|---------------------|----------------|
 | Inference speed (tok/s) | — | — | — |
 | Embedding throughput (docs/min) | — | — | — |
@@ -137,8 +137,8 @@ Target architecture (Phase 2+). Phase 1 implements the **Local** path only, with
 | Frontend | React, JavaScript, CSS | — |
 | Backend API | C# / .NET 10, ASP.NET Core | provider interfaces in `DocQuery.Core` |
 | Vector store | ChromaDB (Docker) | Azure AI Search |
-| Embeddings | Ollama (`nomic-embed-text`) | Azure OpenAI (`text-embedding-ada-002`) |
-| LLM inference | Ollama (Llama 3 — 8B for dev, 70B fits on the Spark) | Azure OpenAI (GPT-4o) |
+| Embeddings | Ollama (`nomic-embed-text`) | Azure OpenAI (`text-embedding-3-small`) |
+| LLM inference | Ollama (Llama 3 — 8B for dev, 70B fits on the Spark) | Azure OpenAI (`gpt-5-mini`) |
 | Hardware | NVIDIA DGX Spark (128 GB unified memory) | Azure (free tier / pay-as-you-go) |
 
 ---
