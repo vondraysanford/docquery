@@ -4,13 +4,26 @@
     "embedding_docs_per_min": 287.0,
     "query_latency_mean_s": 2.38,
     "query_latency_p95_s": 5.2,
-    "cost_per_1k_queries_usd": null
+    "cost_per_1k_queries_usd": null,
+    "answer_quality_score": 8.4,
+    "answer_quality_note": "10/10 correct; most complete on one question (only provider to surface the Hermes detail); boilerplate 'according to the context' openers; one imprecise interface gloss"
   },
   "Azure (gpt-5-mini)": {
     "inference_tok_s": 85.2,
     "embedding_docs_per_min": 152.4,
     "query_latency_mean_s": 4.29,
     "query_latency_p95_s": 5.98,
-    "cost_per_1k_queries_usd": 1.83
+    "cost_per_1k_queries_usd": 1.83,
+    "answer_quality_score": 9.0,
+    "answer_quality_note": "10/10 correct; best source attribution (quotes files by name); minor stylistic artifacts (keyword dumps)"
+  },
+  "Local (Llama 3 70B)": {
+    "inference_tok_s": 5.8,
+    "embedding_docs_per_min": 119.5,
+    "query_latency_mean_s": 21.16,
+    "query_latency_p95_s": 45.72,
+    "cost_per_1k_queries_usd": null,
+    "answer_quality_score": 8.8,
+    "answer_quality_note": "10/10 correct; cleanest prose; one completeness gap (employer omitted); 9x the latency bought no quality gain on this task"
   }
 }

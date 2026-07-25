@@ -57,17 +57,17 @@ Each phase ends with something real: a demo, a benchmark table, a feature I use 
 - [x] Provider switching via `appsettings.json` — no code changes to flip modes
 - [x] Session-scoped conversation memory (follow-up questions keep context)
 - [x] `docker-compose.yml` for one-command local stack
-- [ ] **Benchmarks:** fill the table below with real measurements
+- [x] **Benchmarks:** fill the table below with real measurements
 
 | Metric | Local (Llama 3 8B) | Local (Llama 3 70B) | Azure (gpt-5-mini) |
 |--------|--------------------|---------------------|----------------|
-| Inference speed (tok/s) | 57.4 | — | 85.2 |
-| Embedding throughput (docs/min) | 287 | — | 152 |
-| Average query latency | 2.4 s (p95 5.2 s) | — | 4.3 s (p95 6.0 s) |
+| Inference speed (tok/s) | 57.4 | 5.8 | 85.2 |
+| Embedding throughput (docs/min) | 287 | 120 | 152 |
+| Average query latency | 2.4 s (p95 5.2 s) | 21.2 s (p95 45.7 s) | 4.3 s (p95 6.0 s) |
 | Cost per 1K queries | $0 | $0 | ~$1.83 (estimated) |
-| Answer quality (subjective notes) | — | — | — |
+| Answer quality (subjective notes) | 8.4/10 — all 10 answers correct; most complete on one question; boilerplate "according to the context" openers | 8.8/10 — all 10 correct; cleanest prose; 9× the latency bought no quality gain on this task | 9.0/10 — all 10 correct; best source attribution; minor stylistic artifacts |
 
-<sup>Measured 2026-07-25 with `benchmarks/run_benchmark.py` over the `docs/samples/` corpus (10 questions × 2 passes, tok/s averaged over 3 runs; MacBook M-series for local, East US for Azure). Azure cost estimated from measured token usage × list prices, pending cross-check against billing actuals. The 70B column awaits the DGX Spark over an SSH tunnel — same script, different config.</sup>
+<sup>Measured 2026-07-25 with `benchmarks/run_benchmark.py` over the `docs/samples/` corpus (10 questions × 2 passes, tok/s averaged over 3 runs). 8B ran on a MacBook M-series; 70B on an NVIDIA DGX Spark reached over an SSH tunnel; Azure in East US. Azure cost estimated from measured token usage × list prices, pending cross-check against billing actuals. Quality scores graded against the corpus from the saved answer files in `benchmarks/` — zero hallucinations from any provider; on factual retrieval over a small corpus the spread is narrow, and a harder synthesis-question rematch is queued for Phase 3.</sup>
 
 **Done when:** the same UI runs against both stacks by changing one config value, and every cell in that table holds a measured number — the local-vs-Azure comparison is the most interesting output of this whole project.
 
