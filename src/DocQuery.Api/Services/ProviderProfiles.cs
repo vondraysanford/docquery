@@ -20,6 +20,13 @@ public class ProviderProfile
     public ChromaDbOptions? ChromaDb { get; init; }
     /// <summary>Optional UX hint, e.g. "~20 s per answer".</summary>
     public string? Hint { get; init; }
+
+    /// <summary>
+    /// Identity of the underlying vector store. Profiles sharing a store
+    /// (e.g. Local and Spark both using the same ChromaDB) share document
+    /// registries, so the UI's document list stays truthful per provider.
+    /// </summary>
+    public required string StoreKey { get; init; }
 }
 
 /// <summary>
@@ -90,6 +97,7 @@ public class ProfileRegistry
                     Ollama = ollama,
                     ChromaDb = chroma,
                     Hint = section["Hint"],
+                    StoreKey = StoreKeyFor(type, chroma, configuration),
                 };
             }
         }
@@ -102,15 +110,27 @@ public class ProfileRegistry
                 Type = ProfileType.Local,
                 Ollama = baseOllama,
                 ChromaDb = baseChroma,
+                StoreKey = StoreKeyFor(ProfileType.Local, baseChroma, configuration),
             };
             profiles["Azure"] = new ProviderProfile
             {
                 Name = "Azure",
                 DisplayName = "Azure",
                 Type = ProfileType.Azure,
+                StoreKey = StoreKeyFor(ProfileType.Azure, null, configuration),
             };
         }
 
+        return Finish(profiles, configuration);
+    }
+
+    private static string StoreKeyFor(ProfileType type, ChromaDbOptions? chroma, IConfiguration configuration)
+        => type == ProfileType.Local
+            ? $"chroma:{chroma!.BaseUrl.TrimEnd('/')}"
+            : $"azure-search:{configuration["DocQuery:Azure:Search:Endpoint"]}/{configuration["DocQuery:Azure:Search:IndexName"]}";
+
+    private static ProfileRegistry Finish(Dictionary<string, ProviderProfile> profiles, IConfiguration configuration)
+    {
         // DefaultProfile wins; the legacy Provider key keeps old configs and
         // the compose DocQuery__Provider env var working.
         var defaultName = configuration["DocQuery:DefaultProfile"]

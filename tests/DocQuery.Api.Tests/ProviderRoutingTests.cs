@@ -74,6 +74,19 @@ public class ProviderRoutingTests : IClassFixture<ApiSmokeTests.TestAppFactory>
     }
 
     [Fact]
+    public async Task DocumentList_IsScopedPerProviderStore()
+    {
+        await UploadAsync("azure-only.txt", "Azure");
+
+        var azureListRequest = WithProfile(new HttpRequestMessage(HttpMethod.Get, "/api/documents"), "Azure");
+        var azureList = await (await _client.SendAsync(azureListRequest)).Content.ReadAsStringAsync();
+        Assert.Contains("azure-only.txt", azureList);
+
+        var defaultList = await _client.GetStringAsync("/api/documents");
+        Assert.DoesNotContain("azure-only.txt", defaultList);
+    }
+
+    [Fact]
     public async Task UnknownProfile_IsRejectedWith400()
     {
         var request = WithProfile(new HttpRequestMessage(HttpMethod.Post, "/api/query"), "Mainframe");

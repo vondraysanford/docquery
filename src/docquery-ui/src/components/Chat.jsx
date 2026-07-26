@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { askQuestionStream } from '../api';
 
-export default function Chat({ messages, setMessages, conversationId, setConversationId, hasDocuments }) {
+export default function Chat({ messages, setMessages, conversationId, setConversationId, hasDocuments, displayNameFor }) {
   const [question, setQuestion] = useState('');
   const [busy, setBusy] = useState(false);
   const scrollRef = useRef(null);
@@ -33,13 +33,20 @@ export default function Chat({ messages, setMessages, conversationId, setConvers
         return next;
       });
 
+    const startedAt = performance.now();
     try {
       const result = await askQuestionStream(trimmed, conversationId, {
         onSources: (sources) => updateStreamingMessage((m) => ({ ...m, sources })),
         onToken: (t) => updateStreamingMessage((m) => ({ ...m, content: m.content + t })),
       });
       setConversationId(result.conversationId);
-      updateStreamingMessage((m) => ({ ...m, streaming: false }));
+      const elapsed = ((performance.now() - startedAt) / 1000).toFixed(1);
+      updateStreamingMessage((m) => ({
+        ...m,
+        streaming: false,
+        provider: result.provider,
+        elapsed,
+      }));
     } catch (error) {
       updateStreamingMessage((m) => ({
         ...m,
@@ -68,6 +75,11 @@ export default function Chat({ messages, setMessages, conversationId, setConvers
             className={`message ${message.role} ${message.isError ? 'error' : ''} ${message.streaming ? 'streaming' : ''}`}
           >
             {message.content || (message.streaming ? 'Thinking…' : message.content)}
+            {message.provider && (
+              <div className="message-meta">
+                {displayNameFor ? displayNameFor(message.provider) : message.provider} · {message.elapsed}s
+              </div>
+            )}
           </div>
         ))}
       </div>

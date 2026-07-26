@@ -3,6 +3,19 @@
 // deployed API's origin. No URLs are hardcoded in components.
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
 
+// The active provider profile is sent on every request so the API routes it
+// to the matching provider stack. Set by the provider selector; null means
+// "use the server's default profile".
+let activeProfile = null;
+
+export function setActiveProfile(name) {
+  activeProfile = name;
+}
+
+function withProfile(headers = {}) {
+  return activeProfile ? { ...headers, 'X-DocQuery-Profile': activeProfile } : headers;
+}
+
 async function ensureOk(response) {
   if (!response.ok) {
     const detail = await response.text();
@@ -11,8 +24,15 @@ async function ensureOk(response) {
   return response;
 }
 
+export async function getProviders() {
+  const response = await ensureOk(await fetch(`${API_BASE}/api/providers`));
+  return response.json();
+}
+
 export async function listDocuments() {
-  const response = await ensureOk(await fetch(`${API_BASE}/api/documents`));
+  const response = await ensureOk(
+    await fetch(`${API_BASE}/api/documents`, { headers: withProfile() }),
+  );
   return response.json();
 }
 
@@ -20,14 +40,21 @@ export async function uploadDocument(file) {
   const form = new FormData();
   form.append('file', file);
   const response = await ensureOk(
-    await fetch(`${API_BASE}/api/documents/upload`, { method: 'POST', body: form }),
+    await fetch(`${API_BASE}/api/documents/upload`, {
+      method: 'POST',
+      headers: withProfile(),
+      body: form,
+    }),
   );
   return response.json();
 }
 
 export async function deleteDocument(documentId) {
   await ensureOk(
-    await fetch(`${API_BASE}/api/documents/${documentId}`, { method: 'DELETE' }),
+    await fetch(`${API_BASE}/api/documents/${documentId}`, {
+      method: 'DELETE',
+      headers: withProfile(),
+    }),
   );
 }
 
@@ -35,7 +62,7 @@ export async function askQuestion(question, conversationId) {
   const response = await ensureOk(
     await fetch(`${API_BASE}/api/query`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: withProfile({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ question, conversationId }),
     }),
   );
@@ -44,13 +71,13 @@ export async function askQuestion(question, conversationId) {
 
 // Streaming variant: reads the Server-Sent Events response and invokes
 // handlers as events arrive — onSources(sources[]) as soon as retrieval
-// completes, onToken(text) per answer delta. Resolves with { conversationId }
-// from the final "done" event.
+// completes, onToken(text) per answer delta. Resolves with the "done" event
+// payload: { conversationId, provider }.
 export async function askQuestionStream(question, conversationId, { onSources, onToken } = {}) {
   const response = await ensureOk(
     await fetch(`${API_BASE}/api/query/stream`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: withProfile({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ question, conversationId }),
     }),
   );

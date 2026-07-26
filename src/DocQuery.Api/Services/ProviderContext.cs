@@ -11,6 +11,8 @@ public interface IProviderContext
 {
     string ProfileName { get; }
     string ProfileDisplayName { get; }
+    /// <summary>Identity of the profile's vector store; see ProviderProfile.StoreKey.</summary>
+    string StoreKey { get; }
     IEmbeddingProvider Embeddings { get; }
     ILlmProvider Llm { get; }
     IVectorStore VectorStore { get; }
@@ -40,6 +42,7 @@ public class HeaderProviderContext : IProviderContext
 
     public string ProfileName => _profile.Name;
     public string ProfileDisplayName => _profile.DisplayName;
+    public string StoreKey => _profile.StoreKey;
 
     public IEmbeddingProvider Embeddings
         => _services.GetRequiredKeyedService<IEmbeddingProvider>(_profile.Name);

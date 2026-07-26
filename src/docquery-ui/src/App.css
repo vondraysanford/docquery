@@ -32,6 +32,62 @@ body {
 
 .app-header {
   margin-bottom: 1.25rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+/* Provider selector */
+.provider-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 380px;
+}
+
+.provider-selector label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.provider-selector select {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel);
+  font-size: 0.88rem;
+  color: var(--ink);
+}
+
+.provider-refresh {
+  border: 1px solid var(--border);
+  background: var(--panel);
+  border-radius: 6px;
+  padding: 0.3rem 0.5rem;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.provider-refresh:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.provider-hint {
+  flex-basis: 100%;
+  text-align: right;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.provider-hint.provider-warn {
+  color: var(--error);
 }
 
 .app-header h1 {
@@ -203,6 +259,15 @@ body {
 .message.pending {
   color: var(--muted);
   font-style: italic;
+}
+
+/* Per-answer provider + latency attribution */
+.message-meta {
+  margin-top: 0.45rem;
+  font-size: 0.72rem;
+  color: var(--muted);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  padding-top: 0.35rem;
 }
 
 /* Blinking cursor while an answer is streaming in */

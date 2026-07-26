@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using DocQuery.Api.Services;
 using DocQuery.Core.Interfaces;
 using DocQuery.Core.Models;
@@ -13,14 +14,22 @@ public class DocumentsController : ControllerBase
     private readonly IEmbeddingProvider _embeddingProvider;
     private readonly IVectorStore _vectorStore;
     private readonly ChunkingService _chunkingService;
+    private readonly string _storeKey;
 
-    // In-memory document tracking (swap for a database in production)
-    private static readonly Dictionary<string, Document> _documents = new();
+    // In-memory document tracking, scoped per vector store so the list stays
+    // truthful when switching providers. Profiles that share a store (Local
+    // and Spark on the same ChromaDB) share a registry; Azure gets its own.
+    // Still forgotten on restart — a known limitation for the demo-mode work.
+    private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, Document>> _documentsByStore = new();
+
+    private ConcurrentDictionary<string, Document> Documents
+        => _documentsByStore.GetOrAdd(_storeKey, _ => new ConcurrentDictionary<string, Document>());
 
     public DocumentsController(IProviderContext providers, ChunkingService chunkingService)
     {
         _embeddingProvider = providers.Embeddings;
         _vectorStore = providers.VectorStore;
+        _storeKey = providers.StoreKey;
         _chunkingService = chunkingService;
     }
 
@@ -80,7 +89,7 @@ public class DocumentsController : ControllerBase
         await _vectorStore.StoreChunksAsync(chunks, cancellationToken);
 
         // 6. Track the document
-        _documents[document.Id] = document;
+        Documents[document.Id] = document;
 
         return Ok(new
         {
@@ -96,12 +105,14 @@ public class DocumentsController : ControllerBase
     [HttpGet]
     public IActionResult List()
     {
-        var docs = _documents.Values.Select(d => new
-        {
-            d.Id,
-            d.FileName,
-            d.UploadedAt
-        });
+        var docs = Documents.Values
+            .OrderBy(d => d.UploadedAt)
+            .Select(d => new
+            {
+                d.Id,
+                d.FileName,
+                d.UploadedAt
+            });
 
         return Ok(docs);
     }
@@ -112,11 +123,11 @@ public class DocumentsController : ControllerBase
     [HttpDelete("{documentId}")]
     public async Task<IActionResult> Delete(string documentId, CancellationToken cancellationToken)
     {
-        if (!_documents.ContainsKey(documentId))
+        if (!Documents.ContainsKey(documentId))
             return NotFound();
 
         await _vectorStore.DeleteDocumentAsync(documentId, cancellationToken);
-        _documents.Remove(documentId);
+        Documents.TryRemove(documentId, out _);
 
         return NoContent();
     }
