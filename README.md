@@ -72,6 +72,8 @@ Each phase ends with something real: a demo, a benchmark table, a feature I use 
 
 **Done when:** the same UI runs against both stacks by changing one config value, and every cell in that table holds a measured number — the local-vs-Azure comparison is the most interesting output of this whole project.
 
+![Switching DocQuery's entire AI stack from local Ollama+ChromaDB to Azure OpenAI+AI Search by changing one config value — same UI, same documents, same question](docs/demo-provider-swap.gif)
+
 ---
 
 ## Phase 3 — UX & Live Demo
