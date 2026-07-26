@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { askQuestion } from '../api';
+import { askQuestionStream } from '../api';
 
 export default function Chat({ messages, setMessages, conversationId, setConversationId, hasDocuments }) {
   const [question, setQuestion] = useState('');
@@ -16,20 +16,37 @@ export default function Chat({ messages, setMessages, conversationId, setConvers
     if (!trimmed || busy) return;
 
     setQuestion('');
-    setMessages((prev) => [...prev, { role: 'user', content: trimmed }]);
+    // The empty assistant message is the streaming target: sources land on it
+    // as soon as retrieval finishes, then tokens grow its content.
+    setMessages((prev) => [
+      ...prev,
+      { role: 'user', content: trimmed },
+      { role: 'assistant', content: '', streaming: true },
+    ]);
     setBusy(true);
+
+    const updateStreamingMessage = (updater) =>
+      setMessages((prev) => {
+        const next = [...prev];
+        const last = next[next.length - 1];
+        next[next.length - 1] = updater(last);
+        return next;
+      });
+
     try {
-      const result = await askQuestion(trimmed, conversationId);
+      const result = await askQuestionStream(trimmed, conversationId, {
+        onSources: (sources) => updateStreamingMessage((m) => ({ ...m, sources })),
+        onToken: (t) => updateStreamingMessage((m) => ({ ...m, content: m.content + t })),
+      });
       setConversationId(result.conversationId);
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', content: result.answer, sources: result.sources },
-      ]);
+      updateStreamingMessage((m) => ({ ...m, streaming: false }));
     } catch (error) {
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', content: `Something went wrong: ${error.message}`, isError: true },
-      ]);
+      updateStreamingMessage((m) => ({
+        ...m,
+        streaming: false,
+        isError: true,
+        content: m.content || `Something went wrong: ${error.message}`,
+      }));
     } finally {
       setBusy(false);
     }
@@ -48,12 +65,11 @@ export default function Chat({ messages, setMessages, conversationId, setConvers
         {messages.map((message, index) => (
           <div
             key={index}
-            className={`message ${message.role} ${message.isError ? 'error' : ''}`}
+            className={`message ${message.role} ${message.isError ? 'error' : ''} ${message.streaming ? 'streaming' : ''}`}
           >
-            {message.content}
+            {message.content || (message.streaming ? 'Thinking…' : message.content)}
           </div>
         ))}
-        {busy && <div className="message assistant pending">Thinking…</div>}
       </div>
       <form className="chat-input" onSubmit={handleSubmit}>
         <input

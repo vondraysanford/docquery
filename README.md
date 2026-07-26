@@ -2,7 +2,7 @@
 
 **Ask natural language questions over your documents — powered by local LLMs or Azure OpenAI.**
 
-DocQuery is a retrieval-augmented generation (RAG) application: upload technical documentation or study materials and query them in plain English, with every answer grounded in cited source chunks. Built with a C#/.NET 10 backend and React frontend, designed around a swappable provider architecture that will support both fully local inference (Ollama on an NVIDIA DGX Spark) and Azure AI services.
+DocQuery is a retrieval-augmented generation (RAG) application: upload technical documentation or study materials and query them in plain English, with every answer grounded in cited source chunks. Built with a C#/.NET 10 backend and React frontend, designed around a swappable provider architecture: fully local inference (Ollama + ChromaDB) or Azure AI services (Azure OpenAI + AI Search), selected by a single config value.
 
 > **✅ Status: Phases 1 & 2 complete (local RAG + swappable Azure mode, benchmarked) — Phase 3 (UX & live demo) up next.**
 > This README is the build plan as much as the documentation. Nothing is claimed as done unless its box is checked. Follow along: I'm building this in public.
@@ -78,9 +78,9 @@ Each phase ends with something real: a demo, a benchmark table, a feature I use 
 
 ## Phase 3 — UX & Live Demo
 
-**Goal:** make DocQuery feel great to use, then put it on the public internet — a live demo linked from [vondraysanford.com](https://vondraysanford.com), served by the DGX Spark in my house.
+**Goal:** make DocQuery feel great to use, then put it on the public internet — a live demo linked from [vondraysanford.com](https://vondraysanford.com), Azure-hosted end-to-end so it's online 24/7.
 
-- [ ] Streaming responses (token-by-token answers — what makes the 70B's latency livable)
+- [x] Streaming responses (SSE: citations arrive before the answer starts, then token-by-token deltas from both providers) (token-by-token answers — what makes the 70B's latency livable)
 - [ ] **Provider selector in the UI:** runtime switching between profiles (Local 8B, DGX Spark 70B, Azure) with health-checked availability, per-answer provider + latency attribution
 - [ ] Side-by-side provider comparison UI (same question, both stacks, answers side by side)
 - [ ] UI deployed to Cloudflare Pages on a `docquery.` subdomain (static build, API origin via `VITE_API_BASE_URL`)
@@ -246,6 +246,25 @@ dotnet test tests/DocQuery.Api.Tests
 ```
 
 The tests use fake providers, so they pass without Ollama, ChromaDB, or Docker running.
+
+### Using a remote Ollama host (e.g., an NVIDIA DGX Spark)
+
+Nothing network-related is hardcoded: point the config at any machine running Ollama and DocQuery uses it for both embeddings and chat. The remote host needs both models pulled (`ollama pull nomic-embed-text` plus your chat model). For a box that shouldn't expose Ollama's port — it has **no authentication or TLS of its own**, so treat it like a database port — tunnel over SSH instead of binding it to the network:
+
+```bash
+# Forward local port 11435 to the remote machine's Ollama
+ssh -N -L 11435:localhost:11434 you@your-inference-box
+```
+
+```json
+"Ollama": {
+  "BaseUrl": "http://localhost:11435",
+  "EmbeddingModel": "nomic-embed-text",
+  "ChatModel": "llama3:70b"
+}
+```
+
+This is exactly how the benchmark table's 70B column was measured — `benchmarks/run_benchmark.py` documents the ready-made invocation.
 
 ---
 

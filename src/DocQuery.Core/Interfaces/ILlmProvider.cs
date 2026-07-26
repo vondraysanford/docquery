@@ -32,6 +32,15 @@ public interface ILlmProvider
         string systemPrompt,
         List<ChatMessage> conversationHistory,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Stream a completion as text deltas, in generation order. Concatenating
+    /// every delta yields the same full answer GenerateCompletionAsync returns.
+    /// </summary>
+    IAsyncEnumerable<string> GenerateCompletionStreamAsync(
+        string systemPrompt,
+        List<ChatMessage> conversationHistory,
+        CancellationToken cancellationToken = default);
 }
 
 /// <summary>

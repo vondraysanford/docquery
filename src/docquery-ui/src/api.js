@@ -41,3 +41,47 @@ export async function askQuestion(question, conversationId) {
   );
   return response.json();
 }
+
+// Streaming variant: reads the Server-Sent Events response and invokes
+// handlers as events arrive — onSources(sources[]) as soon as retrieval
+// completes, onToken(text) per answer delta. Resolves with { conversationId }
+// from the final "done" event.
+export async function askQuestionStream(question, conversationId, { onSources, onToken } = {}) {
+  const response = await ensureOk(
+    await fetch(`${API_BASE}/api/query/stream`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question, conversationId }),
+    }),
+  );
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let result = {};
+
+  const handleFrame = (frame) => {
+    let eventType = 'message';
+    const dataLines = [];
+    for (const line of frame.split('\n')) {
+      if (line.startsWith('event: ')) eventType = line.slice(7).trim();
+      else if (line.startsWith('data: ')) dataLines.push(line.slice(6));
+    }
+    if (dataLines.length === 0) return;
+    const payload = JSON.parse(dataLines.join('\n'));
+    if (eventType === 'sources') onSources?.(payload);
+    else if (eventType === 'token') onToken?.(payload.t);
+    else if (eventType === 'done') result = payload;
+  };
+
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const frames = buffer.split('\n\n');
+    buffer = frames.pop();
+    frames.forEach(handleFrame);
+  }
+
+  return result;
+}

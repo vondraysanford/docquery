@@ -68,4 +68,23 @@ public class FakeLlmProvider : ILlmProvider
             .ToList();
         return Task.FromResult(CannedAnswer);
     }
+
+    // Streams the canned answer in small slices; concatenating every delta
+    // reproduces CannedAnswer exactly, mirroring the real providers' contract.
+    public async IAsyncEnumerable<string> GenerateCompletionStreamAsync(
+        string systemPrompt,
+        List<ChatMessage> conversationHistory,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        LastConversation = conversationHistory
+            .Select(m => new ChatMessage { Role = m.Role, Content = m.Content })
+            .ToList();
+
+        const int sliceSize = 15;
+        for (var i = 0; i < CannedAnswer.Length; i += sliceSize)
+        {
+            yield return CannedAnswer.Substring(i, Math.Min(sliceSize, CannedAnswer.Length - i));
+            await Task.Yield();
+        }
+    }
 }

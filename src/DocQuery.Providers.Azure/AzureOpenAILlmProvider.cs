@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Azure;
 using Azure.AI.OpenAI;
 using DocQuery.Core.Interfaces;
@@ -42,6 +43,32 @@ public class AzureOpenAILlmProvider : ILlmProvider
         List<CoreChatMessage> conversationHistory,
         CancellationToken cancellationToken = default)
     {
+        var messages = BuildMessages(systemPrompt, conversationHistory);
+        var completion = await _client.CompleteChatAsync(messages, cancellationToken: cancellationToken);
+        return completion.Value.Content[0].Text;
+    }
+
+    public async IAsyncEnumerable<string> GenerateCompletionStreamAsync(
+        string systemPrompt,
+        List<CoreChatMessage> conversationHistory,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var messages = BuildMessages(systemPrompt, conversationHistory);
+
+        await foreach (var update in _client.CompleteChatStreamingAsync(
+            messages, cancellationToken: cancellationToken))
+        {
+            foreach (var part in update.ContentUpdate)
+            {
+                if (!string.IsNullOrEmpty(part.Text))
+                    yield return part.Text;
+            }
+        }
+    }
+
+    private static List<OpenAI.Chat.ChatMessage> BuildMessages(
+        string systemPrompt, List<CoreChatMessage> conversationHistory)
+    {
         var messages = new List<OpenAI.Chat.ChatMessage>
         {
             new SystemChatMessage(systemPrompt)
@@ -54,7 +81,6 @@ public class AzureOpenAILlmProvider : ILlmProvider
                 : new UserChatMessage(message.Content));
         }
 
-        var completion = await _client.CompleteChatAsync(messages, cancellationToken: cancellationToken);
-        return completion.Value.Content[0].Text;
+        return messages;
     }
 }
