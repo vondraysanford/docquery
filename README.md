@@ -85,11 +85,13 @@ Each phase ends with something real: a demo, a benchmark table, a feature I use 
 - [ ] Side-by-side provider comparison UI (same question, both stacks, answers side by side)
 - [ ] UI deployed to Cloudflare Pages on a `docquery.` subdomain (static build, API origin via `VITE_API_BASE_URL`)
 - [ ] API hosted in Azure for 24/7 availability — the public demo runs the **Azure provider end-to-end** (gpt-5-mini + AI Search), so it needs no Ollama or ChromaDB: one stateless container plus the resources that already exist
-- [ ] **"Ask my portfolio" demo mode:** read-only over a curated corpus — resume, certifications, projects, open source work, plus a self-authored bank of common interview questions answered in my own words (Q&A-shaped chunks retrieve exceptionally well)
-- [ ] Preset starter questions in the UI, drawn from the interview bank, so recruiters and hiring managers always have a great first question one click away
-- [ ] Public-demo hardening: mutation endpoints disabled in demo mode, rate limiting, recruiter-tuned system prompt; regenerate keys and move secrets out of local config
+- [ ] **Demo mode:** read-only over a seeded corpus of sample technical docs (course materials, DocQuery's own documentation) — the demo shows the product doing what it's for: answering questions about documents, with citations
+- [ ] Preset starter questions in the UI so visitors always have a good first question one click away
+- [ ] Public-demo hardening: mutation endpoints disabled in demo mode, rate limiting; regenerate keys and move secrets out of local config
 
-**Done when:** a recruiter can click the link on my portfolio site any time of day, ask "what has Vondray actually built?", and get a cited answer.
+**Done when:** anyone can click the demo link on my portfolio site any time of day, ask the sample docs a question, and get a cited answer.
+
+**After Phase 3 — "Ask my portfolio":** the same deployed engine pointed at a different corpus (resume, projects, and a self-authored bank of interview questions answered in my own words) with a recruiter-tuned prompt. Same infrastructure, different documents — ships whenever the interview bank is written, no code changes needed.
 
 ---
 
