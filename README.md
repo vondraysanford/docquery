@@ -113,7 +113,7 @@ Each phase ends with something real: a demo, a benchmark table, a feature I use 
 
 ## Architecture
 
-Target architecture (Phase 2+). Phase 1 implements the **Local** path only, without the provider layer — the abstraction is extracted in Phase 2 once there's working code to abstract.
+As built and verified (Phases 1–2). One config value — `DocQuery:Provider` — selects which stack the app runs on; the interfaces in `DocQuery.Core` are the seam. Both paths are implemented, integration-tested against live services, and benchmarked above.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -130,23 +130,25 @@ Target architecture (Phase 2+). Phase 1 implements the **Local** path only, with
 │   • storage            • ranking          • citations   │
 │                            │                            │
 │                  ┌─────────▼──────────┐                 │
-│                  │   Provider Layer   │   (Phase 2)     │
-│                  │   IEmbedding /     │                 │
+│                  │   Provider Layer   │  selected by    │
+│                  │   IEmbedding /     │  configuration  │
 │                  │   ILlm / IVector   │                 │
 │                  └────┬──────────┬────┘                 │
 └───────────────────────┼──────────┼──────────────────────┘
                         │          │
-              ┌─────────▼───┐  ┌───▼─────────────┐
-              │    LOCAL    │  │      AZURE      │
-              │ Ollama      │  │ Azure OpenAI    │
-              │ Llama 3     │  │ Azure AI Search │
-              │ ChromaDB    │  │                 │
-              └─────┬───────┘  └─────────────────┘
-                    │
-        ┌───────────▼──────────┐
-        │  NVIDIA DGX Spark    │       ☁️ Azure Cloud
-        │  128 GB Unified Mem  │       (Phase 2)
-        └──────────────────────┘
+        ┌───────────────▼──────┐  ┌▼────────────────────────┐
+        │        LOCAL         │  │         AZURE           │
+        │ Ollama               │  │ Azure OpenAI            │
+        │  nomic-embed-text    │  │  text-embedding-3-small │
+        │  Llama 3 (8B–70B)    │  │  gpt-5-mini             │
+        │ ChromaDB (Docker)    │  │ Azure AI Search         │
+        └─────┬────────────────┘  └─────────────────────────┘
+              │                        ☁️ Azure Cloud
+   ┌──────────▼─────────────────┐
+   │ MacBook (8B dev) or        │
+   │ DGX Spark (70B, 128 GB     │
+   │ unified memory) via config │
+   └────────────────────────────┘
 ```
 
 ---
