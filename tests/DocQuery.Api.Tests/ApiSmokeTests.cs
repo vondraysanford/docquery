@@ -5,6 +5,7 @@ using System.Text.Json;
 using DocQuery.Core.Interfaces;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Xunit;
@@ -21,19 +22,44 @@ public class ApiSmokeTests : IClassFixture<ApiSmokeTests.TestAppFactory>
     {
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
+            // Deterministic profiles regardless of the machine's appsettings:
+            // "Local" is the default; "Azure" exists to exercise header routing.
+            builder.ConfigureAppConfiguration((_, config) =>
+            {
+                config.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["DocQuery:DefaultProfile"] = "Local",
+                    ["DocQuery:Profiles:Local:Type"] = "Local",
+                    ["DocQuery:Profiles:Local:DisplayName"] = "Local (fake)",
+                    ["DocQuery:Profiles:Azure:Type"] = "Azure",
+                    ["DocQuery:Profiles:Azure:DisplayName"] = "Azure (fake)",
+                });
+            });
+
             builder.ConfigureServices(services =>
             {
-                services.RemoveAll<IEmbeddingProvider>();
-                services.RemoveAll<ILlmProvider>();
-                services.RemoveAll<IVectorStore>();
+                // Strip every real provider registration — keyed and unkeyed.
+                foreach (var providerType in new[] { typeof(IEmbeddingProvider), typeof(ILlmProvider), typeof(IVectorStore) })
+                    for (var i = services.Count - 1; i >= 0; i--)
+                        if (services[i].ServiceType == providerType)
+                            services.RemoveAt(i);
 
-                // Fakes registered as concrete singletons too, so tests can
-                // resolve them and inspect what the controllers passed in.
+                // Default-profile ("Local") fakes as shared concrete singletons,
+                // so existing tests can resolve and inspect them unchanged.
                 services.AddSingleton<FakeLlmProvider>();
                 services.AddSingleton<FakeVectorStore>();
-                services.AddSingleton<IEmbeddingProvider, FakeEmbeddingProvider>();
-                services.AddSingleton<ILlmProvider>(sp => sp.GetRequiredService<FakeLlmProvider>());
-                services.AddSingleton<IVectorStore>(sp => sp.GetRequiredService<FakeVectorStore>());
+                services.AddSingleton<FakeEmbeddingProvider>();
+                services.AddKeyedSingleton<IEmbeddingProvider>("Local", (sp, _) => sp.GetRequiredService<FakeEmbeddingProvider>());
+                services.AddKeyedSingleton<ILlmProvider>("Local", (sp, _) => sp.GetRequiredService<FakeLlmProvider>());
+                services.AddKeyedSingleton<IVectorStore>("Local", (sp, _) => sp.GetRequiredService<FakeVectorStore>());
+
+                // A distinct fake trio for the "Azure" profile, so routing
+                // tests can prove which profile served a request.
+                services.AddKeyedSingleton<FakeLlmProvider>("Azure");
+                services.AddKeyedSingleton<FakeVectorStore>("Azure");
+                services.AddKeyedSingleton<IEmbeddingProvider>("Azure", (_, _) => new FakeEmbeddingProvider());
+                services.AddKeyedSingleton<ILlmProvider>("Azure", (sp, _) => sp.GetRequiredKeyedService<FakeLlmProvider>("Azure"));
+                services.AddKeyedSingleton<IVectorStore>("Azure", (sp, _) => sp.GetRequiredKeyedService<FakeVectorStore>("Azure"));
             });
         }
     }

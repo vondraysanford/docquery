@@ -17,13 +17,10 @@ public class DocumentsController : ControllerBase
     // In-memory document tracking (swap for a database in production)
     private static readonly Dictionary<string, Document> _documents = new();
 
-    public DocumentsController(
-        IEmbeddingProvider embeddingProvider,
-        IVectorStore vectorStore,
-        ChunkingService chunkingService)
+    public DocumentsController(IProviderContext providers, ChunkingService chunkingService)
     {
-        _embeddingProvider = embeddingProvider;
-        _vectorStore = vectorStore;
+        _embeddingProvider = providers.Embeddings;
+        _vectorStore = providers.VectorStore;
         _chunkingService = chunkingService;
     }
 

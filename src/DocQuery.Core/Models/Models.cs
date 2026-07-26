@@ -51,6 +51,8 @@ public class QueryResponse
     public string Answer { get; set; } = string.Empty;
     public List<SourceReference> Sources { get; set; } = new();
     public string ConversationId { get; set; } = string.Empty;
+    /// <summary>Name of the provider profile that produced this answer.</summary>
+    public string Provider { get; set; } = string.Empty;
 }
 
 /// <summary>

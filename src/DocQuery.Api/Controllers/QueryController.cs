@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Text;
 using System.Text.Json;
+using DocQuery.Api.Services;
 using DocQuery.Core.Interfaces;
 using DocQuery.Core.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -14,6 +15,7 @@ public class QueryController : ControllerBase
     private readonly IEmbeddingProvider _embeddingProvider;
     private readonly ILlmProvider _llmProvider;
     private readonly IVectorStore _vectorStore;
+    private readonly string _profileName;
 
     // Session-scoped in-memory conversation store: survives across requests,
     // forgotten on restart. Capped per conversation so long sessions can't
@@ -41,14 +43,12 @@ public class QueryController : ControllerBase
         {context}
         """;
 
-    public QueryController(
-        IEmbeddingProvider embeddingProvider,
-        ILlmProvider llmProvider,
-        IVectorStore vectorStore)
+    public QueryController(IProviderContext providers)
     {
-        _embeddingProvider = embeddingProvider;
-        _llmProvider = llmProvider;
-        _vectorStore = vectorStore;
+        _embeddingProvider = providers.Embeddings;
+        _llmProvider = providers.Llm;
+        _vectorStore = providers.VectorStore;
+        _profileName = providers.ProfileName;
     }
 
     /// <summary>
@@ -69,7 +69,8 @@ public class QueryController : ControllerBase
             {
                 Answer = NoResultsAnswer,
                 Sources = new List<SourceReference>(),
-                ConversationId = request.ConversationId ?? Guid.NewGuid().ToString()
+                ConversationId = request.ConversationId ?? Guid.NewGuid().ToString(),
+                Provider = _profileName
             });
         }
 
@@ -85,7 +86,8 @@ public class QueryController : ControllerBase
         {
             Answer = answer,
             ConversationId = conversationId,
-            Sources = ToSourceReferences(retrievedChunks)
+            Sources = ToSourceReferences(retrievedChunks),
+            Provider = _profileName
         });
     }
 
@@ -116,7 +118,7 @@ public class QueryController : ControllerBase
             var fallbackId = request.ConversationId ?? Guid.NewGuid().ToString();
             await WriteEventAsync("sources", new List<SourceReference>(), cancellationToken);
             await WriteEventAsync("token", new { t = NoResultsAnswer }, cancellationToken);
-            await WriteEventAsync("done", new { conversationId = fallbackId }, cancellationToken);
+            await WriteEventAsync("done", new { conversationId = fallbackId, provider = _profileName }, cancellationToken);
             return;
         }
 
@@ -137,7 +139,7 @@ public class QueryController : ControllerBase
 
         AppendAssistantTurn(history, fullAnswer.ToString());
 
-        await WriteEventAsync("done", new { conversationId }, cancellationToken);
+        await WriteEventAsync("done", new { conversationId, provider = _profileName }, cancellationToken);
     }
 
     private async Task WriteEventAsync(string eventType, object payload, CancellationToken cancellationToken)
