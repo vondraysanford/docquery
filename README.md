@@ -81,7 +81,7 @@ Each phase ends with something real: a demo, a benchmark table, a feature I use 
 **Goal:** make DocQuery feel great to use, then put it on the public internet — a live demo linked from [vondraysanford.com](https://vondraysanford.com), Azure-hosted end-to-end so it's online 24/7.
 
 - [x] Streaming responses (SSE: citations arrive before the answer starts, then token-by-token deltas from both providers) (token-by-token answers — what makes the 70B's latency livable)
-- [ ] **Provider selector in the UI:** runtime switching between profiles (Local 8B, DGX Spark 70B, Azure) with health-checked availability, per-answer provider + latency attribution
+- [x] **Provider selector in the UI:** runtime switching between profiles (Local 8B, DGX Spark 70B, Azure) with health-checked availability, per-answer provider + latency attribution
 - [ ] Side-by-side provider comparison UI (same question, both stacks, answers side by side)
 - [ ] UI deployed to Cloudflare Pages on a `docquery.` subdomain (static build, API origin via `VITE_API_BASE_URL`)
 - [ ] API hosted in Azure for 24/7 availability — the public demo runs the **Azure provider end-to-end** (gpt-5-mini + AI Search), so it needs no Ollama or ChromaDB: one stateless container plus the resources that already exist
