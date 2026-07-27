@@ -1,8 +1,10 @@
+using System.Threading.RateLimiting;
 using DocQuery.Api.Services;
 using DocQuery.Core.Interfaces;
 using DocQuery.Core.Services;
 using DocQuery.Providers.Azure;
 using DocQuery.Providers.Local;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,6 +20,36 @@ builder.Services.AddSingleton<ChunkingService>();
 builder.Services.AddHttpClient();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IProviderContext, HeaderProviderContext>();
+builder.Services.AddSingleton<DocumentRegistry>();
+
+// Demo mode: read-only seeded corpus, preset questions, rate limiting.
+builder.Services.Configure<DemoOptions>(builder.Configuration.GetSection(DemoOptions.SectionName));
+var demoOptions = builder.Configuration.GetSection(DemoOptions.SectionName).Get<DemoOptions>() ?? new DemoOptions();
+builder.Services.AddSingleton<CorpusSeeder>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<CorpusSeeder>());
+
+if (demoOptions.Enabled)
+{
+    builder.Services.AddRateLimiter(options =>
+    {
+        options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+        options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+        {
+            // Health probes must never be throttled — container platforms
+            // interpret 429s from /health as "app is down" and restart it.
+            if (context.Request.Path.StartsWithSegments("/health"))
+                return RateLimitPartition.GetNoLimiter("health");
+
+            return RateLimitPartition.GetFixedWindowLimiter(
+                context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = demoOptions.RateLimitPerMinute,
+                    Window = TimeSpan.FromMinutes(1),
+                });
+        });
+    });
+}
 
 // Azure options are flat sections shared by all Azure-type profiles.
 builder.Services.Configure<AzureOpenAIOptions>(
@@ -58,11 +90,15 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Allowed browser origins come from config so the deployed UI's domain can
+// be added without a code change; localhost:3000 stays the dev default.
+var corsOrigins = builder.Configuration.GetSection("DocQuery:Cors:AllowedOrigins").Get<string[]>()
+    ?? new[] { "http://localhost:3000" };
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins("http://localhost:3000") // React dev server
+        policy.WithOrigins(corsOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
@@ -95,11 +131,21 @@ app.Use(async (context, next) =>
     await next();
 });
 
+if (demoOptions.Enabled)
+    app.UseRateLimiter();
+
 app.MapControllers();
 
+// Lets the UI adapt to demo mode without hardcoding anything client-side.
+app.MapGet("/api/config", (Microsoft.Extensions.Options.IOptions<DemoOptions> demo) => Results.Ok(new
+{
+    demoMode = demo.Value.Enabled,
+    presetQuestions = demo.Value.PresetQuestions,
+}));
+
 app.Logger.LogInformation(
-    "DocQuery starting with {Count} provider profile(s); default: {Default}",
-    registry.Profiles.Count, registry.DefaultProfileName);
+    "DocQuery starting with {Count} provider profile(s); default: {Default}; demo mode: {Demo}",
+    registry.Profiles.Count, registry.DefaultProfileName, demoOptions.Enabled);
 app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
 app.Run();
 

@@ -16,6 +16,7 @@ namespace DocQuery.Providers.Azure;
 public class AzureOpenAILlmProvider : ILlmProvider
 {
     private readonly ChatClient _client;
+    private readonly ChatCompletionOptions? _completionOptions;
 
     public AzureOpenAILlmProvider(IOptions<AzureOpenAIOptions> options)
     {
@@ -24,6 +25,9 @@ public class AzureOpenAILlmProvider : ILlmProvider
             new Uri(config.Endpoint),
             new AzureKeyCredential(config.ApiKey));
         _client = azureClient.GetChatClient(config.ChatDeployment);
+        _completionOptions = config.MaxOutputTokens is int cap
+            ? new ChatCompletionOptions { MaxOutputTokenCount = cap }
+            : null;
     }
 
     public Task<string> GenerateCompletionAsync(
@@ -44,7 +48,7 @@ public class AzureOpenAILlmProvider : ILlmProvider
         CancellationToken cancellationToken = default)
     {
         var messages = BuildMessages(systemPrompt, conversationHistory);
-        var completion = await _client.CompleteChatAsync(messages, cancellationToken: cancellationToken);
+        var completion = await _client.CompleteChatAsync(messages, _completionOptions, cancellationToken);
         return completion.Value.Content[0].Text;
     }
 
@@ -56,7 +60,7 @@ public class AzureOpenAILlmProvider : ILlmProvider
         var messages = BuildMessages(systemPrompt, conversationHistory);
 
         await foreach (var update in _client.CompleteChatStreamingAsync(
-            messages, cancellationToken: cancellationToken))
+            messages, _completionOptions, cancellationToken))
         {
             foreach (var part in update.ContentUpdate)
             {

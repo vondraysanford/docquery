@@ -49,6 +49,7 @@ public class AzureSearchVectorStore : IVectorStore
                 new SimpleField("documentId", SearchFieldDataType.String) { IsFilterable = true },
                 new SimpleField("chunkIndex", SearchFieldDataType.Int32),
                 new SimpleField("fileName", SearchFieldDataType.String),
+                new SimpleField("contentHash", SearchFieldDataType.String),
                 new SearchField("embedding", SearchFieldDataType.Collection(SearchFieldDataType.Single))
                 {
                     IsSearchable = true,
@@ -84,6 +85,7 @@ public class AzureSearchVectorStore : IVectorStore
             ["documentId"] = chunk.DocumentId,
             ["chunkIndex"] = chunk.ChunkIndex,
             ["fileName"] = chunk.Metadata.GetValueOrDefault("fileName", ""),
+            ["contentHash"] = chunk.Metadata.GetValueOrDefault("contentHash", ""),
             ["embedding"] = chunk.Embedding,
         });
 
@@ -144,6 +146,23 @@ public class AzureSearchVectorStore : IVectorStore
         }
 
         return chunks.OrderByDescending(c => c.Score).ToList();
+    }
+
+    public async Task<string?> GetDocumentFingerprintAsync(string documentId, CancellationToken cancellationToken = default)
+    {
+        await EnsureIndexAsync(cancellationToken);
+
+        var filter = $"documentId eq '{documentId.Replace("'", "''")}'";
+        var options = new SearchOptions { Filter = filter, Size = 1 };
+        options.Select.Add("contentHash");
+
+        var response = await _searchClient.SearchAsync<SearchDocument>(
+            searchText: null, options, cancellationToken);
+
+        await foreach (var result in response.Value.GetResultsAsync())
+            return result.Document.GetString("contentHash") ?? "";
+
+        return null;
     }
 
     public async Task DeleteDocumentAsync(string documentId, CancellationToken cancellationToken = default)

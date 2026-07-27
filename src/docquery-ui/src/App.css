@@ -65,6 +65,34 @@ body {
   grid-template-columns: 1fr;
 }
 
+/* Demo mode: no upload panel, chat takes its width */
+.app-layout.demo-layout {
+  grid-template-columns: 1fr 320px;
+}
+
+.preset-questions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.preset-chip {
+  border: 1px solid var(--border);
+  background: var(--panel);
+  border-radius: 999px;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.85rem;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.preset-chip:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .compare-panel {
   padding: 0;
 }

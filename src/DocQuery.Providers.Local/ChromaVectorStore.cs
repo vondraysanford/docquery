@@ -120,6 +120,29 @@ public class ChromaVectorStore : IVectorStore
         return chunks.OrderByDescending(c => c.Score).ToList();
     }
 
+    public async Task<string?> GetDocumentFingerprintAsync(string documentId, CancellationToken cancellationToken = default)
+    {
+        await EnsureCollectionAsync(cancellationToken);
+
+        var request = new
+        {
+            where = new Dictionary<string, string> { ["documentId"] = documentId },
+            limit = 1,
+            include = new[] { "metadatas" },
+        };
+
+        var response = await _httpClient.PostAsJsonAsync(
+            $"{ApiBase}/collections/{_collectionId}/get", request, cancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        var result = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken);
+        var metadatas = result.GetProperty("metadatas");
+        if (metadatas.GetArrayLength() == 0)
+            return null;
+
+        return metadatas[0].TryGetProperty("contentHash", out var hash) ? hash.GetString() : "";
+    }
+
     public async Task DeleteDocumentAsync(string documentId, CancellationToken cancellationToken = default)
     {
         await EnsureCollectionAsync(cancellationToken);

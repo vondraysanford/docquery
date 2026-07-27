@@ -47,6 +47,12 @@ public class FakeVectorStore : IVectorStore
         _chunks.RemoveAll(chunk => chunk.DocumentId == documentId);
         return Task.CompletedTask;
     }
+
+    public Task<string?> GetDocumentFingerprintAsync(string documentId, CancellationToken cancellationToken = default)
+    {
+        var chunk = _chunks.FirstOrDefault(c => c.DocumentId == documentId);
+        return Task.FromResult(chunk?.Metadata.GetValueOrDefault("contentHash", ""));
+    }
 }
 
 public class FakeLlmProvider : ILlmProvider

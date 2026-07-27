@@ -36,4 +36,12 @@ public interface IVectorStore
     /// Delete all chunks belonging to a specific document.
     /// </summary>
     Task DeleteDocumentAsync(string documentId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns the stored content fingerprint (the "contentHash" chunk
+    /// metadata) for a document, or null if the document isn't in the store.
+    /// Used by corpus seeding to skip unchanged files and re-ingest edited
+    /// ones without re-embedding everything on every startup.
+    /// </summary>
+    Task<string?> GetDocumentFingerprintAsync(string documentId, CancellationToken cancellationToken = default);
 }

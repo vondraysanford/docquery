@@ -30,6 +30,11 @@ export async function getProviders() {
   return response.json();
 }
 
+export async function getConfig() {
+  const response = await ensureOk(await fetch(`${API_BASE}/api/config`));
+  return response.json();
+}
+
 export async function listDocuments() {
   const response = await ensureOk(
     await fetch(`${API_BASE}/api/documents`, { headers: withProfile() }),

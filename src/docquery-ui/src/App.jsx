@@ -4,7 +4,7 @@ import Chat from './components/Chat';
 import SourcesPane from './components/SourcesPane';
 import ProviderSelector from './components/ProviderSelector';
 import ComparePanel from './components/ComparePanel';
-import { listDocuments, getProviders, setActiveProfile } from './api';
+import { listDocuments, getProviders, getConfig, setActiveProfile } from './api';
 
 const PROFILE_STORAGE_KEY = 'docquery-profile';
 
@@ -16,6 +16,7 @@ export default function App() {
   const [providers, setProviders] = useState([]);
   const [profile, setProfile] = useState(null);
   const [mode, setMode] = useState('chat');
+  const [appConfig, setAppConfig] = useState({ demoMode: false, presetQuestions: [] });
 
   const refreshDocuments = useCallback(async () => {
     try {
@@ -49,6 +50,7 @@ export default function App() {
   useEffect(() => {
     refreshDocuments();
     refreshProviders();
+    getConfig().then(setAppConfig).catch(() => {});
   }, [refreshDocuments, refreshProviders]);
 
   // Once providers load, adopt the remembered selection if it's still valid,
@@ -101,8 +103,8 @@ export default function App() {
       </header>
       {apiError && <div className="api-error">{apiError}</div>}
       {mode === 'chat' ? (
-        <main className="app-layout">
-          <UploadPanel documents={documents} onChanged={refreshDocuments} />
+        <main className={`app-layout ${appConfig.demoMode ? 'demo-layout' : ''}`}>
+          {!appConfig.demoMode && <UploadPanel documents={documents} onChanged={refreshDocuments} />}
           <Chat
             messages={messages}
             setMessages={setMessages}
@@ -110,6 +112,7 @@ export default function App() {
             setConversationId={setConversationId}
             hasDocuments={documents.length > 0}
             displayNameFor={displayNameFor}
+            presetQuestions={appConfig.presetQuestions}
           />
           <SourcesPane sources={latestAnswer?.sources ?? []} />
         </main>

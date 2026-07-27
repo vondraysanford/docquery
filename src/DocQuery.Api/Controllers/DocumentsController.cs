@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using DocQuery.Api.Services;
 using DocQuery.Core.Interfaces;
+using Microsoft.Extensions.Options;
 using DocQuery.Core.Models;
 using DocQuery.Core.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -14,24 +15,25 @@ public class DocumentsController : ControllerBase
     private readonly IEmbeddingProvider _embeddingProvider;
     private readonly IVectorStore _vectorStore;
     private readonly ChunkingService _chunkingService;
-    private readonly string _storeKey;
+    private readonly ConcurrentDictionary<string, Document> _documents;
+    private readonly bool _demoMode;
 
-    // In-memory document tracking, scoped per vector store so the list stays
-    // truthful when switching providers. Profiles that share a store (Local
-    // and Spark on the same ChromaDB) share a registry; Azure gets its own.
-    // Still forgotten on restart — a known limitation for the demo-mode work.
-    private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, Document>> _documentsByStore = new();
-
-    private ConcurrentDictionary<string, Document> Documents
-        => _documentsByStore.GetOrAdd(_storeKey, _ => new ConcurrentDictionary<string, Document>());
-
-    public DocumentsController(IProviderContext providers, ChunkingService chunkingService)
+    public DocumentsController(
+        IProviderContext providers,
+        ChunkingService chunkingService,
+        DocumentRegistry registry,
+        IOptions<DemoOptions> demoOptions)
     {
         _embeddingProvider = providers.Embeddings;
         _vectorStore = providers.VectorStore;
-        _storeKey = providers.StoreKey;
         _chunkingService = chunkingService;
+        // Scoped per vector store so the list stays truthful when switching
+        // providers; Local and Spark share ChromaDB, so they share a registry.
+        _documents = registry.ForStore(providers.StoreKey);
+        _demoMode = demoOptions.Value.Enabled;
     }
+
+    private ConcurrentDictionary<string, Document> Documents => _documents;
 
     /// <summary>
     /// Upload a document for ingestion into the RAG pipeline.
@@ -40,6 +42,10 @@ public class DocumentsController : ControllerBase
     [HttpPost("upload")]
     public async Task<IActionResult> Upload(IFormFile? file, CancellationToken cancellationToken)
     {
+        if (_demoMode)
+            return StatusCode(StatusCodes.Status403Forbidden,
+                "Uploads are disabled in this demo — the corpus is read-only. Clone the repo to run DocQuery with your own documents.");
+
         if (file is null || file.Length == 0)
             return BadRequest("A non-empty file is required.");
 
@@ -123,6 +129,10 @@ public class DocumentsController : ControllerBase
     [HttpDelete("{documentId}")]
     public async Task<IActionResult> Delete(string documentId, CancellationToken cancellationToken)
     {
+        if (_demoMode)
+            return StatusCode(StatusCodes.Status403Forbidden,
+                "Deleting documents is disabled in this demo — the corpus is read-only.");
+
         if (!Documents.ContainsKey(documentId))
             return NotFound();
 

@@ -23,6 +23,16 @@ public class QueryController : ControllerBase
     private static readonly ConcurrentDictionary<string, List<ChatMessage>> _conversations = new();
     private const int MaxHistoryMessages = 20; // 10 question/answer exchanges
 
+    // Anyone can mint new conversationIds, so the store must be bounded or a
+    // scripted client can grow it without limit. Oldest conversations are
+    // evicted once the cap is reached.
+    private const int MaxConversations = 500;
+    private static readonly ConcurrentQueue<string> _conversationOrder = new();
+
+    // Bounds what a single question can cost: the string is embedded and sent
+    // to the chat model, so its length is directly billable.
+    private const int MaxQuestionLength = 2000;
+
     private const string NoResultsAnswer =
         "I couldn't find any relevant information in the uploaded documents. Try uploading more materials or rephrasing your question.";
 
@@ -60,6 +70,8 @@ public class QueryController : ControllerBase
     {
         if (string.IsNullOrWhiteSpace(request.Question))
             return BadRequest("Question is required.");
+        if (request.Question.Length > MaxQuestionLength)
+            return BadRequest($"Question is too long (max {MaxQuestionLength} characters).");
 
         var retrievedChunks = await RetrieveAsync(request.Question, cancellationToken);
 
@@ -104,6 +116,12 @@ public class QueryController : ControllerBase
         {
             Response.StatusCode = StatusCodes.Status400BadRequest;
             await Response.WriteAsync("Question is required.", cancellationToken);
+            return;
+        }
+        if (request.Question.Length > MaxQuestionLength)
+        {
+            Response.StatusCode = StatusCodes.Status400BadRequest;
+            await Response.WriteAsync($"Question is too long (max {MaxQuestionLength} characters).", cancellationToken);
             return;
         }
 
@@ -183,7 +201,13 @@ public class QueryController : ControllerBase
         AppendUserTurn(QueryRequest request)
     {
         var conversationId = request.ConversationId ?? Guid.NewGuid().ToString();
-        var history = _conversations.GetOrAdd(conversationId, _ => new List<ChatMessage>());
+        var history = _conversations.GetOrAdd(conversationId, id =>
+        {
+            _conversationOrder.Enqueue(id);
+            while (_conversations.Count >= MaxConversations && _conversationOrder.TryDequeue(out var oldest))
+                _conversations.TryRemove(oldest, out _);
+            return new List<ChatMessage>();
+        });
 
         List<ChatMessage> snapshot;
         lock (history)

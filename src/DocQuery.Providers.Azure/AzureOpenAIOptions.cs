@@ -11,4 +11,11 @@ public class AzureOpenAIOptions
     // not by model id — these defaults match the appsettings example.
     public string EmbeddingDeployment { get; set; } = "text-embedding-3-small";
     public string ChatDeployment { get; set; } = "gpt-5-mini";
+
+    /// <summary>
+    /// Hard cap on completion length per answer. Output tokens are the
+    /// expensive ones; the public demo sets this so a "repeat X forever"
+    /// prompt can't run up the bill. Null = provider default.
+    /// </summary>
+    public int? MaxOutputTokens { get; set; }
 }

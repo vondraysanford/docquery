@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { askQuestionStream } from '../api';
 
-export default function Chat({ messages, setMessages, conversationId, setConversationId, hasDocuments, displayNameFor }) {
+export default function Chat({ messages, setMessages, conversationId, setConversationId, hasDocuments, displayNameFor, presetQuestions = [] }) {
   const [question, setQuestion] = useState('');
   const [busy, setBusy] = useState(false);
   const scrollRef = useRef(null);
@@ -12,7 +12,11 @@ export default function Chat({ messages, setMessages, conversationId, setConvers
 
   async function handleSubmit(event) {
     event.preventDefault();
-    const trimmed = question.trim();
+    await ask(question);
+  }
+
+  async function ask(text) {
+    const trimmed = text.trim();
     if (!trimmed || busy) return;
 
     setQuestion('');
@@ -63,11 +67,22 @@ export default function Chat({ messages, setMessages, conversationId, setConvers
     <section className="panel chat-panel">
       <div className="chat-messages" ref={scrollRef}>
         {messages.length === 0 && (
-          <p className="chat-empty">
-            {hasDocuments
-              ? 'Ask a question about your documents.'
-              : 'Upload a document, then ask a question about it.'}
-          </p>
+          <div className="chat-empty">
+            <p>
+              {hasDocuments || presetQuestions.length > 0
+                ? 'Ask a question about the documents.'
+                : 'Upload a document, then ask a question about it.'}
+            </p>
+            {presetQuestions.length > 0 && (
+              <div className="preset-questions">
+                {presetQuestions.map((preset) => (
+                  <button key={preset} type="button" className="preset-chip" onClick={() => ask(preset)}>
+                    {preset}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         )}
         {messages.map((message, index) => (
           <div
