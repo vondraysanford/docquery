@@ -4,7 +4,7 @@
 
 DocQuery is a retrieval-augmented generation (RAG) application: upload technical documentation or study materials and query them in plain English, with every answer grounded in cited source chunks. Built with a C#/.NET 10 backend and React frontend, designed around a swappable provider architecture: fully local inference (Ollama + ChromaDB) or Azure AI services (Azure OpenAI + AI Search), selected by a single config value.
 
-> **✅ Status: Phases 1 & 2 complete (local RAG + swappable Azure mode, benchmarked) — Phase 3 (UX & live demo) up next.**
+> **✅ Status: Phases 1–3 complete (local RAG, swappable Azure mode + benchmarks, streaming UX with provider switching) — Phase 4 (live demo) up next.**
 > This README is the build plan as much as the documentation. Nothing is claimed as done unless its box is checked. Follow along: I'm building this in public.
 
 ---
@@ -17,14 +17,15 @@ Now the study-partner use case has a new target: I'm starting Georgia Tech's OMS
 
 ---
 
-## The Plan: Three Phases
+## The Plan: Five Phases
 
 | Phase | Theme | Outcome | Estimate |
 |-------|-------|---------|----------|
 | **1** | Make it work | A demoable local RAG app: upload → ask → cited answer | 2–3 weekends |
 | **2** | Make it swappable | Provider pattern + Azure mode, benchmarked against local | 2 weekends |
-| **3** | Make it public | Streaming + provider UX, live "Ask my portfolio" demo on vondraysanford.com | 3–4 weekends |
-| **4** | Make it mine | Hybrid search, collections, study mode for OMSCS | ongoing |
+| **3** | Make it feel great | Streaming, provider selector, side-by-side comparison | 2 weekends |
+| **4** | Make it public | Live demo on vondraysanford.com, Azure-hosted 24/7 | 1–2 weekends |
+| **5** | Make it mine | Hybrid search, collections, study mode for OMSCS | ongoing |
 
 Each phase ends with something real: a demo, a benchmark table, a feature I use daily. No phase begins until the previous phase's "done when" is true.
 
@@ -76,28 +77,37 @@ Each phase ends with something real: a demo, a benchmark table, a feature I use 
 
 ---
 
-## Phase 3 — UX & Live Demo
+## Phase 3 — UX
 
-**Goal:** make DocQuery feel great to use, then put it on the public internet — a live demo linked from [vondraysanford.com](https://vondraysanford.com), Azure-hosted end-to-end so it's online 24/7.
+**Goal:** make DocQuery feel great to use — the polish that turns a working pipeline into something you'd happily demo.
 
-- [x] Streaming responses (SSE: citations arrive before the answer starts, then token-by-token deltas from both providers) (token-by-token answers — what makes the 70B's latency livable)
+- [x] Streaming responses (SSE: citations arrive before the answer starts, then token-by-token deltas from both providers — what makes the 70B's latency livable)
 - [x] **Provider selector in the UI:** runtime switching between profiles (Local 8B, DGX Spark 70B, Azure) with health-checked availability, per-answer provider + latency attribution
 - [x] Side-by-side provider comparison UI (same question, both stacks, answers side by side — streamed concurrently with per-answer latency)
+
+![Side-by-side provider comparison: the same question streaming into two columns at once — DGX Spark's Llama 3 70B still generating while the local 8B has already finished, each answer with its own latency badge and cited sources](docs/demo-side-by-side.gif)
+
+**Done when:** answers stream, providers switch mid-conversation without a restart, and two stacks can race each other on screen — all verified in the browser.
+
+---
+
+## Phase 4 — Live Demo
+
+**Goal:** put DocQuery on the public internet — a live demo linked from [vondraysanford.com](https://vondraysanford.com), Azure-hosted end-to-end so it's online 24/7.
+
 - [ ] UI deployed to Cloudflare Pages on a `docquery.` subdomain (static build, API origin via `VITE_API_BASE_URL`)
 - [ ] API hosted in Azure for 24/7 availability — the public demo runs the **Azure provider end-to-end** (gpt-5-mini + AI Search), so it needs no Ollama or ChromaDB: one stateless container plus the resources that already exist
 - [ ] **Demo mode:** read-only over a seeded corpus of sample technical docs (course materials, DocQuery's own documentation) — the demo shows the product doing what it's for: answering questions about documents, with citations
 - [ ] Preset starter questions in the UI so visitors always have a good first question one click away
 - [ ] Public-demo hardening: mutation endpoints disabled in demo mode, rate limiting; regenerate keys and move secrets out of local config
 
-![Side-by-side provider comparison: the same question streaming into two columns at once — DGX Spark's Llama 3 70B still generating while the local 8B has already finished, each answer with its own latency badge and cited sources](docs/demo-side-by-side.gif)
-
 **Done when:** anyone can click the demo link on my portfolio site any time of day, ask the sample docs a question, and get a cited answer.
 
-**After Phase 3 — "Ask my portfolio":** the same deployed engine pointed at a different corpus (resume, projects, and a self-authored bank of interview questions answered in my own words) with a recruiter-tuned prompt. Same infrastructure, different documents — ships whenever the interview bank is written, no code changes needed.
+**After Phase 4 — "Ask my portfolio":** the same deployed engine pointed at a different corpus (resume, projects, and a self-authored bank of interview questions answered in my own words) with a recruiter-tuned prompt. Same infrastructure, different documents — ships whenever the interview bank is written, no code changes needed.
 
 ---
 
-## Phase 4 — Daily Tool & Study Mode
+## Phase 5 — Daily Tool & Study Mode
 
 **Goal:** turn the deployed pipeline into the tool I reach for daily during OMSCS coursework.
 
@@ -106,7 +116,7 @@ Each phase ends with something real: a demo, a benchmark table, a feature I use 
 - [ ] DOCX and HTML ingestion
 - [ ] **Study mode (capstone):** generate flashcards and quiz questions from ingested documents
 
-**Stretch ideas (beyond Phase 4):**
+**Stretch ideas (beyond Phase 5):**
 - Fine-tuned embedding model for domain-specific content
 - Embedding the "Ask my portfolio" chat directly into the vondraysanford.com homepage (the Phase 3 demo links out to it; embedding it inline is the stretch)
 - Spark-served variant of the public demo (Cloudflare Tunnel to home hardware, Tailscale for the dev path) — the $0-inference story, deliberately deprioritized in favor of always-online Azure
@@ -306,6 +316,7 @@ Updated at the end of each phase — honest notes on what was harder than expect
 - **Phase 2:** _pending — including the local-vs-Azure quality/cost/latency verdict_
 - **Phase 3:** _pending_
 - **Phase 4:** _pending_
+- **Phase 5:** _pending_
 
 ---
 
