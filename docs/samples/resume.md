@@ -44,7 +44,7 @@ Vondray mentored new junior developers on full-stack best practices, conducted c
 
 ## Education
 
-Vondray earned a Bachelor of Science in Computer Science from Georgia Southern University in Statesboro, Georgia, where he was a student member of the Association for Computing Machinery (ACM).
+Vondray earned a Bachelor of Science in Computer Science from Georgia Southern University in Statesboro, Georgia, where he was a student member of the Association for Computing Machinery (ACM). He is starting Georgia Tech's Online Master of Science in Computer Science (OMSCS) in Spring 2027, specializing in Machine Learning.
 
 ## Professional Affiliations
 
@@ -52,4 +52,4 @@ Vondray is a Lifetime Member of the National Society of Black Engineers (NSBE), 
 
 ## Certifications
 
-Vondray holds the following certifications, all issued in June 2026: Microsoft Certified: Azure AI Engineer Associate (AI-102); Microsoft Certified: Azure Fundamentals (AZ-900); Microsoft Certified: Azure AI Fundamentals (AI-900); GitHub Copilot (GH-300); GitHub Foundations (GH-900); and Anthropic's Claude Code in Action, Introduction to Subagents, Introduction to Agent Skills, and Introduction to Model Context Protocol (MCP). See `certifications.md` in this folder for the story behind them.
+Vondray holds the following certifications, all issued in June 2026: Microsoft Certified: Azure AI Engineer Associate (AI-102); Microsoft Certified: Azure Fundamentals (AZ-900); Microsoft Certified: Azure AI Fundamentals (AI-900); GitHub Copilot (GH-300); GitHub Foundations (GH-900); and Anthropic's Claude Code in Action, Introduction to Subagents, Introduction to Agent Skills, and Introduction to Model Context Protocol (MCP). The story of how he earned them is covered in his certifications write-up.

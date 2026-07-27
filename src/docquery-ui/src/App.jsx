@@ -53,6 +53,11 @@ export default function App() {
     getConfig().then(setAppConfig).catch(() => {});
   }, [refreshDocuments, refreshProviders]);
 
+  // Demo mode reframes the app as "Interview Vondray" — the tab title included.
+  useEffect(() => {
+    if (appConfig.demoMode) document.title = 'DocQuery — Interview Vondray';
+  }, [appConfig.demoMode]);
+
   // Once providers load, adopt the remembered selection if it's still valid,
   // otherwise the server's default.
   useEffect(() => {
@@ -77,29 +82,40 @@ export default function App() {
     <div className="app">
       <header className="app-header">
         <div>
-          <h1>DocQuery</h1>
-          <p>Ask questions about your documents — every answer grounded in cited sources.</p>
+          <h1>
+            DocQuery
+            {appConfig.demoMode && <span className="demo-badge">Ask my portfolio</span>}
+          </h1>
+          <p>
+            {appConfig.demoMode
+              ? 'Ask questions about Vondray — every answer grounded in cited sources.'
+              : 'Ask questions about your documents — every answer grounded in cited sources.'}
+          </p>
         </div>
-        <div className="header-controls">
-          <button
-            type="button"
-            className="mode-toggle"
-            onClick={() => {
-              refreshProviders();
-              setMode(mode === 'chat' ? 'compare' : 'chat');
-            }}
-          >
-            {mode === 'chat' ? 'Compare providers' : 'Back to chat'}
-          </button>
-          {mode === 'chat' && (
-            <ProviderSelector
-              providers={providers}
-              selected={profile}
-              onSelect={selectProfile}
-              onRefresh={refreshProviders}
-            />
-          )}
-        </div>
+        {/* The public demo is single-provider and read-only: no compare mode,
+            no provider selector — those are dev/local affordances. */}
+        {!appConfig.demoMode && (
+          <div className="header-controls">
+            <button
+              type="button"
+              className="mode-toggle"
+              onClick={() => {
+                refreshProviders();
+                setMode(mode === 'chat' ? 'compare' : 'chat');
+              }}
+            >
+              {mode === 'chat' ? 'Compare providers' : 'Back to chat'}
+            </button>
+            {mode === 'chat' && (
+              <ProviderSelector
+                providers={providers}
+                selected={profile}
+                onSelect={selectProfile}
+                onRefresh={refreshProviders}
+              />
+            )}
+          </div>
+        )}
       </header>
       {apiError && <div className="api-error">{apiError}</div>}
       {mode === 'chat' ? (
@@ -113,6 +129,7 @@ export default function App() {
             hasDocuments={documents.length > 0}
             displayNameFor={displayNameFor}
             presetQuestions={appConfig.presetQuestions}
+            demoMode={appConfig.demoMode}
           />
           <SourcesPane sources={latestAnswer?.sources ?? []} />
         </main>
@@ -120,6 +137,26 @@ export default function App() {
         <main className="app-layout compare-layout">
           <ComparePanel providers={providers} displayNameFor={displayNameFor} />
         </main>
+      )}
+      {appConfig.demoMode && (
+        <footer className="demo-footer">
+          <span>
+            Read-only demo — answers are grounded in Vondray's resume, projects, and
+            interview answers.
+          </span>
+          <nav>
+            <a href="https://vondraysanford.com" target="_blank" rel="noreferrer">
+              Portfolio
+            </a>
+            <a
+              href="https://github.com/vondraysanford/docquery"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Source on GitHub
+            </a>
+          </nav>
+        </footer>
       )}
     </div>
   );

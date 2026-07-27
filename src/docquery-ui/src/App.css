@@ -92,6 +92,53 @@ select:focus-visible {
   font-weight: 300;
 }
 
+/* Demo mode: small mono label beside the title, same voice as panel headings. */
+.demo-badge {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--signal);
+  border: 1px solid var(--signal);
+  padding: 0.2rem 0.5rem;
+  margin-left: 0.75rem;
+  vertical-align: middle;
+}
+
+.demo-footer {
+  margin-top: 1.25rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--hairline-strong);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  color: var(--ink-muted);
+  font-size: 0.8rem;
+}
+
+.demo-footer nav {
+  display: flex;
+  gap: 1.25rem;
+}
+
+.demo-footer a {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--signal);
+  text-decoration: none;
+  border-bottom: 1px solid var(--signal);
+}
+
+.demo-footer a:hover {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+
 .api-error {
   border: 1px solid var(--hairline-strong);
   border-left: 2px solid var(--error);

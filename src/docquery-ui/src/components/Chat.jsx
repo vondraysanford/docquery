@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { askQuestionStream } from '../api';
 
-export default function Chat({ messages, setMessages, conversationId, setConversationId, hasDocuments, displayNameFor, presetQuestions = [] }) {
+export default function Chat({ messages, setMessages, conversationId, setConversationId, hasDocuments, displayNameFor, presetQuestions = [], demoMode = false }) {
   const [question, setQuestion] = useState('');
   const [busy, setBusy] = useState(false);
   const scrollRef = useRef(null);
@@ -69,9 +69,11 @@ export default function Chat({ messages, setMessages, conversationId, setConvers
         {messages.length === 0 && (
           <div className="chat-empty">
             <p>
-              {hasDocuments || presetQuestions.length > 0
-                ? 'Ask a question about the documents.'
-                : 'Upload a document, then ask a question about it.'}
+              {demoMode
+                ? "Ask about Vondray's experience, projects, and skills — or start with a question below."
+                : hasDocuments || presetQuestions.length > 0
+                  ? 'Ask a question about the documents.'
+                  : 'Upload a document, then ask a question about it.'}
             </p>
             {presetQuestions.length > 0 && (
               <div className="preset-questions">
@@ -103,7 +105,7 @@ export default function Chat({ messages, setMessages, conversationId, setConvers
           type="text"
           value={question}
           onChange={(event) => setQuestion(event.target.value)}
-          placeholder="Ask a question…"
+          placeholder={demoMode ? 'Ask about Vondray…' : 'Ask a question…'}
           disabled={busy}
         />
         <button type="submit" disabled={busy || !question.trim()}>
