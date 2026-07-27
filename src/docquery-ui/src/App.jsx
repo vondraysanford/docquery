@@ -77,7 +77,7 @@ export default function App() {
     <div className="app">
       <header className="app-header">
         <div>
-          <h1>📄 DocQuery</h1>
+          <h1>DocQuery</h1>
           <p>Ask questions about your documents — every answer grounded in cited sources.</p>
         </div>
         <div className="header-controls">
