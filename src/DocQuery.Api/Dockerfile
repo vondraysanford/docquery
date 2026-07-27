@@ -18,6 +18,15 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
 COPY --from=build /app .
 
+# Curated demo corpus, seeded at startup when Demo:Enabled=true (SeedPath
+# should point at /app/seed). Files are listed explicitly — the corpus is a
+# deliberate choice, never "whatever is in the folder".
+COPY docs/samples/certifications.md \
+     docs/samples/open-source-contributions.md \
+     docs/samples/project-docquery.md \
+     docs/samples/resume.md \
+     /app/seed/
+
 # All DocQuery config (provider, Ollama/Chroma URLs) arrives via environment
 # variables from compose — appsettings.json is .dockerignored so secrets can
 # never be baked into an image.

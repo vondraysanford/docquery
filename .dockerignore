@@ -12,6 +12,12 @@ src/DocQuery.Api/appsettings.json
 .claude/
 .vscode/
 docs/
+# ...except the curated demo corpus, allow-listed file by file so nothing
+# (like the interview bank) rides into an image by accident:
+!docs/samples/certifications.md
+!docs/samples/open-source-contributions.md
+!docs/samples/project-docquery.md
+!docs/samples/resume.md
 tests/
 Demo.mov
 SETUP-LOG.md
