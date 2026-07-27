@@ -22,6 +22,7 @@ COPY --from=build /app .
 # should point at /app/seed). Files are listed explicitly — the corpus is a
 # deliberate choice, never "whatever is in the folder".
 COPY docs/samples/certifications.md \
+     docs/samples/interview-qa.md \
      docs/samples/open-source-contributions.md \
      docs/samples/project-docquery.md \
      docs/samples/resume.md \
