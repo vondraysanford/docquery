@@ -95,7 +95,7 @@ Each phase ends with something real: a demo, a benchmark table, a feature I use 
 
 **Goal:** put DocQuery on the public internet — a live demo linked from [vondraysanford.com](https://vondraysanford.com), Azure-hosted end-to-end so it's online 24/7.
 
-- [ ] UI deployed to Cloudflare Pages on a `docquery.` subdomain (static build, API origin via `VITE_API_BASE_URL`)
+- [x] UI deployed to Cloudflare Pages at [docquery.vondraysanford.com](https://docquery.vondraysanford.com) (static build, API origin via `VITE_API_BASE_URL`, auto-deploys on push)
 - [x] API hosted in Azure for 24/7 availability — the public demo runs the **Azure provider end-to-end** (gpt-5-mini + AI Search), so it needs no Ollama or ChromaDB: one stateless container plus the resources that already exist *(Container Apps, scale-to-zero, image on GHCR)*
 - [x] **Demo mode — "Ask my portfolio":** read-only over a seeded corpus about my work (resume, certifications, projects, open source contributions; a self-authored interview-Q&A bank joins as it's written) — recruiters ask questions, every answer cited back to the source *(live-verified: seeding idempotent, uploads 403, cited answers with conversation memory)*
 - [ ] Preset starter questions tuned for recruiters and hiring managers, one click away
