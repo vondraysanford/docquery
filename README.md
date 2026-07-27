@@ -98,7 +98,7 @@ Each phase ends with something real: a demo, a benchmark table, a feature I use 
 - [x] UI deployed to Cloudflare Pages at [docquery.vondraysanford.com](https://docquery.vondraysanford.com) (static build, API origin via `VITE_API_BASE_URL`, auto-deploys on push)
 - [x] API hosted in Azure for 24/7 availability — the public demo runs the **Azure provider end-to-end** (gpt-5-mini + AI Search), so it needs no Ollama or ChromaDB: one stateless container plus the resources that already exist *(Container Apps, scale-to-zero, image on GHCR)*
 - [x] **Demo mode — "Ask my portfolio":** read-only over a seeded corpus about my work (resume, certifications, projects, open source contributions; a self-authored interview-Q&A bank joins as it's written) — recruiters ask questions, every answer cited back to the source *(live-verified: seeding idempotent, uploads 403, cited answers with conversation memory)*
-- [ ] Preset starter questions tuned for recruiters and hiring managers, one click away
+- [x] Preset starter questions tuned for recruiters and hiring managers, one click away
 - [ ] Public-demo hardening: mutation endpoints disabled in demo mode, rate limiting; regenerate keys and move secrets out of local config
 
 **Done when:** a recruiter can click the demo link on my portfolio site any time of day, ask "what has Vondray actually built?", and get a cited answer.
