@@ -101,6 +101,8 @@ Each phase ends with something real: a demo, a benchmark table, a feature I use 
 - [x] Preset starter questions tuned for recruiters and hiring managers, one click away
 - [x] Public-demo hardening: mutation endpoints disabled in demo mode, per-client rate limiting, question/output-token caps, keys regenerated post-launch; cloud secrets live only in Container Apps secret storage
 
+![The live demo at docquery.vondraysanford.com: "Ask my portfolio" — clicking a preset recruiter question and getting a streamed, cited answer from the Azure-hosted API](docs/demo-ask-my-portfolio.gif)
+
 **Done when:** a recruiter can click the demo link on my portfolio site any time of day, ask "what has Vondray actually built?", and get a cited answer.
 
 The corpus grows over time — new documents and interview answers are a Dockerfile line and a rebuild away, and edited files re-ingest automatically on the next deploy (content fingerprinting).
