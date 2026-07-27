@@ -1,3 +1,4 @@
+using System.ClientModel.Primitives;
 using System.Runtime.CompilerServices;
 using Azure;
 using Azure.AI.OpenAI;
@@ -21,9 +22,18 @@ public class AzureOpenAILlmProvider : ILlmProvider
     public AzureOpenAILlmProvider(IOptions<AzureOpenAIOptions> options)
     {
         var config = options.Value;
+        var clientOptions = new AzureOpenAIClientOptions();
+        // SDK 2.1.0 serializes MaxOutputTokenCount as the legacy "max_tokens",
+        // which reasoning-family models (gpt-5-mini) reject — and its opt-in
+        // switch to the new name throws on construction (known SDK bug). This
+        // policy renames the parameter on the wire instead; delete it when a
+        // fixed SDK version ships.
+        if (config.MaxOutputTokens is not null)
+            clientOptions.AddPolicy(new MaxCompletionTokensRenamePolicy(), PipelinePosition.PerCall);
         var azureClient = new AzureOpenAIClient(
             new Uri(config.Endpoint),
-            new AzureKeyCredential(config.ApiKey));
+            new AzureKeyCredential(config.ApiKey),
+            clientOptions);
         _client = azureClient.GetChatClient(config.ChatDeployment);
         _completionOptions = config.MaxOutputTokens is int cap
             ? new ChatCompletionOptions { MaxOutputTokenCount = cap }

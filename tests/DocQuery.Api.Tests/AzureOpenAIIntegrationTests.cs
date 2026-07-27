@@ -22,7 +22,12 @@ public class AzureOpenAIIntegrationTests
         if (!File.Exists(appsettingsPath))
             return null;
 
-        var config = new ConfigurationBuilder().AddJsonFile(appsettingsPath).Build();
+        // Env vars layer over the file so scenarios like MaxOutputTokens can
+        // be exercised against the live service without editing config.
+        var config = new ConfigurationBuilder()
+            .AddJsonFile(appsettingsPath)
+            .AddEnvironmentVariables()
+            .Build();
         var options = config.GetSection(AzureOpenAIOptions.SectionName).Get<AzureOpenAIOptions>();
 
         var isPlaceholder = options is null
