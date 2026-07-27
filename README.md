@@ -4,7 +4,7 @@
 
 DocQuery is a retrieval-augmented generation (RAG) application: upload technical documentation or study materials and query them in plain English, with every answer grounded in cited source chunks. Built with a C#/.NET 10 backend and React frontend, designed around a swappable provider architecture: fully local inference (Ollama + ChromaDB) or Azure AI services (Azure OpenAI + AI Search), selected by a single config value.
 
-> **✅ Status: Phases 1–3 complete (local RAG, swappable Azure mode + benchmarks, streaming UX with provider switching) — Phase 4 (live demo) up next.**
+> **✅ Status: Phases 1–4 complete — [the live demo is up](https://docquery.vondraysanford.com). Phase 5 (daily tool & study mode) begins with OMSCS.**
 > This README is the build plan as much as the documentation. Nothing is claimed as done unless its box is checked. Follow along: I'm building this in public.
 
 ---
@@ -99,7 +99,7 @@ Each phase ends with something real: a demo, a benchmark table, a feature I use 
 - [x] API hosted in Azure for 24/7 availability — the public demo runs the **Azure provider end-to-end** (gpt-5-mini + AI Search), so it needs no Ollama or ChromaDB: one stateless container plus the resources that already exist *(Container Apps, scale-to-zero, image on GHCR)*
 - [x] **Demo mode — "Ask my portfolio":** read-only over a seeded corpus about my work (resume, certifications, projects, open source contributions; a self-authored interview-Q&A bank joins as it's written) — recruiters ask questions, every answer cited back to the source *(live-verified: seeding idempotent, uploads 403, cited answers with conversation memory)*
 - [x] Preset starter questions tuned for recruiters and hiring managers, one click away
-- [ ] Public-demo hardening: mutation endpoints disabled in demo mode, rate limiting; regenerate keys and move secrets out of local config
+- [x] Public-demo hardening: mutation endpoints disabled in demo mode, per-client rate limiting, question/output-token caps, keys regenerated post-launch; cloud secrets live only in Container Apps secret storage
 
 **Done when:** a recruiter can click the demo link on my portfolio site any time of day, ask "what has Vondray actually built?", and get a cited answer.
 
