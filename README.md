@@ -82,12 +82,14 @@ Each phase ends with something real: a demo, a benchmark table, a feature I use 
 
 - [x] Streaming responses (SSE: citations arrive before the answer starts, then token-by-token deltas from both providers) (token-by-token answers — what makes the 70B's latency livable)
 - [x] **Provider selector in the UI:** runtime switching between profiles (Local 8B, DGX Spark 70B, Azure) with health-checked availability, per-answer provider + latency attribution
-- [ ] Side-by-side provider comparison UI (same question, both stacks, answers side by side)
+- [x] Side-by-side provider comparison UI (same question, both stacks, answers side by side — streamed concurrently with per-answer latency)
 - [ ] UI deployed to Cloudflare Pages on a `docquery.` subdomain (static build, API origin via `VITE_API_BASE_URL`)
 - [ ] API hosted in Azure for 24/7 availability — the public demo runs the **Azure provider end-to-end** (gpt-5-mini + AI Search), so it needs no Ollama or ChromaDB: one stateless container plus the resources that already exist
 - [ ] **Demo mode:** read-only over a seeded corpus of sample technical docs (course materials, DocQuery's own documentation) — the demo shows the product doing what it's for: answering questions about documents, with citations
 - [ ] Preset starter questions in the UI so visitors always have a good first question one click away
 - [ ] Public-demo hardening: mutation endpoints disabled in demo mode, rate limiting; regenerate keys and move secrets out of local config
+
+![Side-by-side provider comparison: the same question streaming into two columns at once — DGX Spark's Llama 3 70B still generating while the local 8B has already finished, each answer with its own latency badge and cited sources](docs/demo-side-by-side.gif)
 
 **Done when:** anyone can click the demo link on my portfolio site any time of day, ask the sample docs a question, and get a cited answer.
 

@@ -3,6 +3,7 @@ import UploadPanel from './components/UploadPanel';
 import Chat from './components/Chat';
 import SourcesPane from './components/SourcesPane';
 import ProviderSelector from './components/ProviderSelector';
+import ComparePanel from './components/ComparePanel';
 import { listDocuments, getProviders, setActiveProfile } from './api';
 
 const PROFILE_STORAGE_KEY = 'docquery-profile';
@@ -14,6 +15,7 @@ export default function App() {
   const [apiError, setApiError] = useState(null);
   const [providers, setProviders] = useState([]);
   const [profile, setProfile] = useState(null);
+  const [mode, setMode] = useState('chat');
 
   const refreshDocuments = useCallback(async () => {
     try {
@@ -76,26 +78,46 @@ export default function App() {
           <h1>📄 DocQuery</h1>
           <p>Ask questions about your documents — every answer grounded in cited sources.</p>
         </div>
-        <ProviderSelector
-          providers={providers}
-          selected={profile}
-          onSelect={selectProfile}
-          onRefresh={refreshProviders}
-        />
+        <div className="header-controls">
+          <button
+            type="button"
+            className="mode-toggle"
+            onClick={() => {
+              refreshProviders();
+              setMode(mode === 'chat' ? 'compare' : 'chat');
+            }}
+          >
+            {mode === 'chat' ? 'Compare providers' : 'Back to chat'}
+          </button>
+          {mode === 'chat' && (
+            <ProviderSelector
+              providers={providers}
+              selected={profile}
+              onSelect={selectProfile}
+              onRefresh={refreshProviders}
+            />
+          )}
+        </div>
       </header>
       {apiError && <div className="api-error">{apiError}</div>}
-      <main className="app-layout">
-        <UploadPanel documents={documents} onChanged={refreshDocuments} />
-        <Chat
-          messages={messages}
-          setMessages={setMessages}
-          conversationId={conversationId}
-          setConversationId={setConversationId}
-          hasDocuments={documents.length > 0}
-          displayNameFor={displayNameFor}
-        />
-        <SourcesPane sources={latestAnswer?.sources ?? []} />
-      </main>
+      {mode === 'chat' ? (
+        <main className="app-layout">
+          <UploadPanel documents={documents} onChanged={refreshDocuments} />
+          <Chat
+            messages={messages}
+            setMessages={setMessages}
+            conversationId={conversationId}
+            setConversationId={setConversationId}
+            hasDocuments={documents.length > 0}
+            displayNameFor={displayNameFor}
+          />
+          <SourcesPane sources={latestAnswer?.sources ?? []} />
+        </main>
+      ) : (
+        <main className="app-layout compare-layout">
+          <ComparePanel providers={providers} displayNameFor={displayNameFor} />
+        </main>
+      )}
     </div>
   );
 }

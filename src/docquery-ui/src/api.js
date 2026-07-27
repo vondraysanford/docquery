@@ -12,8 +12,9 @@ export function setActiveProfile(name) {
   activeProfile = name;
 }
 
-function withProfile(headers = {}) {
-  return activeProfile ? { ...headers, 'X-DocQuery-Profile': activeProfile } : headers;
+function withProfile(headers = {}, override) {
+  const profile = override ?? activeProfile;
+  return profile ? { ...headers, 'X-DocQuery-Profile': profile } : headers;
 }
 
 async function ensureOk(response) {
@@ -72,12 +73,14 @@ export async function askQuestion(question, conversationId) {
 // Streaming variant: reads the Server-Sent Events response and invokes
 // handlers as events arrive — onSources(sources[]) as soon as retrieval
 // completes, onToken(text) per answer delta. Resolves with the "done" event
-// payload: { conversationId, provider }.
-export async function askQuestionStream(question, conversationId, { onSources, onToken } = {}) {
+// payload: { conversationId, provider }. An explicit `profile` overrides the
+// globally selected one — used by the side-by-side comparison to fan the
+// same question out to two providers at once.
+export async function askQuestionStream(question, conversationId, { onSources, onToken } = {}, profile) {
   const response = await ensureOk(
     await fetch(`${API_BASE}/api/query/stream`, {
       method: 'POST',
-      headers: withProfile({ 'Content-Type': 'application/json' }),
+      headers: withProfile({ 'Content-Type': 'application/json' }, profile),
       body: JSON.stringify({ question, conversationId }),
     }),
   );
