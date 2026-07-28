@@ -4,6 +4,7 @@ import Chat from './components/Chat';
 import SourcesPane from './components/SourcesPane';
 import ProviderSelector from './components/ProviderSelector';
 import ComparePanel from './components/ComparePanel';
+import PortfolioNav from './components/PortfolioNav';
 import { listDocuments, getProviders, getConfig, setActiveProfile } from './api';
 
 const PROFILE_STORAGE_KEY = 'docquery-profile';
@@ -79,85 +80,85 @@ export default function App() {
   const latestAnswer = [...messages].reverse().find((m) => m.role === 'assistant');
 
   return (
-    <div className="app">
-      <header className="app-header">
-        <div>
-          <h1>
-            DocQuery
-            {appConfig.demoMode && <span className="demo-badge">Ask my portfolio</span>}
-          </h1>
-          <p>
-            {appConfig.demoMode
-              ? 'Ask questions about Vondray — every answer grounded in cited sources.'
-              : 'Ask questions about your documents — every answer grounded in cited sources.'}
-          </p>
-        </div>
-        {/* The public demo is single-provider and read-only: no compare mode,
-            no provider selector — those are dev/local affordances. */}
-        {!appConfig.demoMode && (
-          <div className="header-controls">
-            <button
-              type="button"
-              className="mode-toggle"
-              onClick={() => {
-                refreshProviders();
-                setMode(mode === 'chat' ? 'compare' : 'chat');
-              }}
-            >
-              {mode === 'chat' ? 'Compare providers' : 'Back to chat'}
-            </button>
-            {mode === 'chat' && (
-              <ProviderSelector
-                providers={providers}
-                selected={profile}
-                onSelect={selectProfile}
-                onRefresh={refreshProviders}
-              />
-            )}
+    <>
+      {appConfig.demoMode && <PortfolioNav />}
+      <div className={`app ${appConfig.demoMode ? 'with-nav' : ''}`}>
+        <header className="app-header">
+          <div>
+            <h1>
+              DocQuery
+              {appConfig.demoMode && <span className="demo-badge">Ask my portfolio</span>}
+            </h1>
+            <p>
+              {appConfig.demoMode
+                ? 'Ask questions about Vondray — every answer grounded in cited sources.'
+                : 'Ask questions about your documents — every answer grounded in cited sources.'}
+            </p>
           </div>
+          {/* The public demo is single-provider and read-only: no compare mode,
+              no provider selector — those are dev/local affordances. */}
+          {!appConfig.demoMode && (
+            <div className="header-controls">
+              <button
+                type="button"
+                className="mode-toggle"
+                onClick={() => {
+                  refreshProviders();
+                  setMode(mode === 'chat' ? 'compare' : 'chat');
+                }}
+              >
+                {mode === 'chat' ? 'Compare providers' : 'Back to chat'}
+              </button>
+              {mode === 'chat' && (
+                <ProviderSelector
+                  providers={providers}
+                  selected={profile}
+                  onSelect={selectProfile}
+                  onRefresh={refreshProviders}
+                />
+              )}
+            </div>
+          )}
+        </header>
+        {apiError && <div className="api-error">{apiError}</div>}
+        {mode === 'chat' ? (
+          <main className={`app-layout ${appConfig.demoMode ? 'demo-layout' : ''}`}>
+            {!appConfig.demoMode && <UploadPanel documents={documents} onChanged={refreshDocuments} />}
+            <Chat
+              messages={messages}
+              setMessages={setMessages}
+              conversationId={conversationId}
+              setConversationId={setConversationId}
+              hasDocuments={documents.length > 0}
+              displayNameFor={displayNameFor}
+              presetQuestions={appConfig.presetQuestions}
+              demoMode={appConfig.demoMode}
+            />
+            <SourcesPane sources={latestAnswer?.sources ?? []} />
+          </main>
+        ) : (
+          <main className="app-layout compare-layout">
+            <ComparePanel providers={providers} displayNameFor={displayNameFor} />
+          </main>
         )}
-      </header>
-      {apiError && <div className="api-error">{apiError}</div>}
-      {mode === 'chat' ? (
-        <main className={`app-layout ${appConfig.demoMode ? 'demo-layout' : ''}`}>
-          {!appConfig.demoMode && <UploadPanel documents={documents} onChanged={refreshDocuments} />}
-          <Chat
-            messages={messages}
-            setMessages={setMessages}
-            conversationId={conversationId}
-            setConversationId={setConversationId}
-            hasDocuments={documents.length > 0}
-            displayNameFor={displayNameFor}
-            presetQuestions={appConfig.presetQuestions}
-            demoMode={appConfig.demoMode}
-          />
-          <SourcesPane sources={latestAnswer?.sources ?? []} />
-        </main>
-      ) : (
-        <main className="app-layout compare-layout">
-          <ComparePanel providers={providers} displayNameFor={displayNameFor} />
-        </main>
-      )}
-      {appConfig.demoMode && (
-        <footer className="demo-footer">
-          <span>
-            Read-only demo — answers are grounded in Vondray's resume, projects, and
-            interview answers.
-          </span>
-          <nav>
-            <a href="https://vondraysanford.com" target="_blank" rel="noreferrer">
-              Portfolio
-            </a>
-            <a
-              href="https://github.com/vondraysanford/docquery"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Source on GitHub
-            </a>
-          </nav>
-        </footer>
-      )}
-    </div>
+        {appConfig.demoMode && (
+          <footer className="demo-footer">
+            <span>
+              Read-only demo — answers are grounded in Vondray's resume, projects, and
+              interview answers.
+            </span>
+            <nav>
+              <a
+                href="https://github.com/vondraysanford/docquery"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Source on GitHub
+              </a>
+            </nav>
+          </footer>
+        )}
+        </div>
+    </>
   );
 }

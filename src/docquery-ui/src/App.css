@@ -71,6 +71,104 @@ select:focus-visible {
   height: 100vh;
 }
 
+/* Demo mode: the portfolio navbar sits above the app, so give back its 60px. */
+.app.with-nav {
+  height: calc(100vh - 60px);
+}
+
+/* ============================================
+   PORTFOLIO NAV (demo mode only)
+   Mirrors the landing page's navbar so the demo
+   reads as a room in the same house. Styles are
+   copied from vondraysanford.com — keep in sync.
+   ============================================ */
+.portfolio-nav {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  padding: 0 2rem;
+  background: rgba(247, 247, 245, 0.86);
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.portfolio-nav .nav-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+  gap: 1rem;
+}
+
+.portfolio-nav .logo {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  color: var(--ink);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.portfolio-nav .logo span {
+  color: var(--ink-muted);
+}
+
+.portfolio-nav .logo .logo-here {
+  color: var(--signal);
+}
+
+.portfolio-nav .nav-links {
+  display: flex;
+  gap: 1.8rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-x: auto;
+}
+
+.portfolio-nav .nav-links a {
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-decoration: none;
+  position: relative;
+  white-space: nowrap;
+  transition: color var(--transition);
+}
+
+.portfolio-nav .nav-links a::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: var(--signal);
+  transition: width var(--transition);
+}
+
+.portfolio-nav .nav-links a:hover {
+  color: var(--ink);
+}
+
+.portfolio-nav .nav-links a:hover::after {
+  width: 100%;
+}
+
+@media (max-width: 760px) {
+  .portfolio-nav {
+    padding: 0 1rem;
+  }
+  .portfolio-nav .nav-links {
+    gap: 1rem;
+  }
+}
+
 .app-header {
   margin-bottom: 1.25rem;
   display: flex;
