@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 const PORTFOLIO = 'https://vondraysanford.com';
 
 // Mirrors the landing page's navbar (manually — keep in sync if the
@@ -15,6 +17,8 @@ const NAV_LINKS = [
 ];
 
 export default function PortfolioNav() {
+  const [open, setOpen] = useState(false);
+
   return (
     <nav className="portfolio-nav">
       <div className="nav-inner">
@@ -22,13 +26,26 @@ export default function PortfolioNav() {
           vondray<span>.sanford</span>
           <span className="logo-here"> / docquery</span>
         </a>
-        <ul className="nav-links">
+        <ul className={`nav-links ${open ? 'open' : ''}`}>
           {NAV_LINKS.map(([label, anchor]) => (
             <li key={anchor}>
-              <a href={`${PORTFOLIO}/#${anchor}`}>{label}</a>
+              <a href={`${PORTFOLIO}/#${anchor}`} onClick={() => setOpen(false)}>
+                {label}
+              </a>
             </li>
           ))}
         </ul>
+        <button
+          type="button"
+          className="hamburger"
+          aria-label="Toggle navigation"
+          aria-expanded={open}
+          onClick={() => setOpen((wasOpen) => !wasOpen)}
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
       </div>
     </nav>
   );

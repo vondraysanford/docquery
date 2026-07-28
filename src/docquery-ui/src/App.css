@@ -127,7 +127,6 @@ select:focus-visible {
   list-style: none;
   margin: 0;
   padding: 0;
-  overflow-x: auto;
 }
 
 .portfolio-nav .nav-links a {
@@ -160,12 +159,49 @@ select:focus-visible {
   width: 100%;
 }
 
+.portfolio-nav .hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+  padding: 4px;
+  background: none;
+  border: none;
+}
+
+.portfolio-nav .hamburger span {
+  width: 22px;
+  height: 1.5px;
+  background: var(--ink);
+  transition: var(--transition);
+}
+
+/* Same breakpoint as the portfolio: links collapse behind the hamburger,
+   the open menu drops down as a paper panel under the bar. */
+@media (max-width: 1000px) {
+  .portfolio-nav .nav-links {
+    display: none;
+  }
+  .portfolio-nav .hamburger {
+    display: flex;
+  }
+  .portfolio-nav .nav-links.open {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 60px;
+    left: 0;
+    right: 0;
+    background: var(--paper);
+    border-bottom: 1px solid var(--hairline-strong);
+    padding: 1.5rem 2rem;
+    gap: 1rem;
+  }
+}
+
 @media (max-width: 760px) {
   .portfolio-nav {
     padding: 0 1rem;
-  }
-  .portfolio-nav .nav-links {
-    gap: 1rem;
   }
 }
 
