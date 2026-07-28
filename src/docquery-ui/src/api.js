@@ -19,10 +19,29 @@ function withProfile(headers = {}, override) {
 
 async function ensureOk(response) {
   if (!response.ok) {
+    if (response.status === 429) {
+      throw new Error("You've hit the demo's rate limit — give it a minute and try again.");
+    }
     const detail = await response.text();
     throw new Error(detail || `Request failed (${response.status})`);
   }
   return response;
+}
+
+// Cold-start probe: the demo API scales to zero, so the first visit may find
+// it asleep. A short timeout keeps the "is it awake?" check snappy — a hung
+// request here means "still waking", not "broken".
+export async function checkHealth(timeoutMs = 4000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(`${API_BASE}/health`, { signal: controller.signal });
+    return response.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export async function getProviders() {

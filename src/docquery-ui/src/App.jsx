@@ -5,7 +5,7 @@ import SourcesPane from './components/SourcesPane';
 import ProviderSelector from './components/ProviderSelector';
 import ComparePanel from './components/ComparePanel';
 import PortfolioNav from './components/PortfolioNav';
-import { listDocuments, getProviders, getConfig, setActiveProfile } from './api';
+import { listDocuments, getProviders, getConfig, setActiveProfile, checkHealth } from './api';
 
 const PROFILE_STORAGE_KEY = 'docquery-profile';
 
@@ -18,6 +18,7 @@ export default function App() {
   const [profile, setProfile] = useState(null);
   const [mode, setMode] = useState('chat');
   const [appConfig, setAppConfig] = useState({ demoMode: false, presetQuestions: [] });
+  const [waking, setWaking] = useState(false);
 
   const refreshDocuments = useCallback(async () => {
     try {
@@ -48,10 +49,40 @@ export default function App() {
     [refreshDocuments],
   );
 
+  // The demo API scales to zero, so the first visitor may catch it asleep.
+  // Probe /health before loading data: if it doesn't answer promptly, show a
+  // "waking up" notice and keep probing instead of flashing an error at
+  // someone whose only crime was arriving first.
   useEffect(() => {
-    refreshDocuments();
-    refreshProviders();
-    getConfig().then(setAppConfig).catch(() => {});
+    let cancelled = false;
+
+    const loadAll = () => {
+      refreshDocuments();
+      refreshProviders();
+      getConfig().then(setAppConfig).catch(() => {});
+    };
+
+    (async () => {
+      if (await checkHealth()) {
+        if (!cancelled) loadAll();
+        return;
+      }
+      if (cancelled) return;
+      setWaking(true);
+      for (let attempt = 0; attempt < 30 && !cancelled; attempt++) {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        if (await checkHealth()) break;
+      }
+      if (!cancelled) {
+        setWaking(false);
+        setApiError(null);
+        loadAll();
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [refreshDocuments, refreshProviders]);
 
   // Demo mode reframes the app as "Interview Vondray" — the tab title included.
@@ -120,7 +151,13 @@ export default function App() {
             </div>
           )}
         </header>
-        {apiError && <div className="api-error">{apiError}</div>}
+        {waking && (
+          <div className="waking-banner">
+            Waking the demo up — it runs on a scale-to-zero container, so the first visit
+            takes a few seconds<span className="waking-dots" />
+          </div>
+        )}
+        {apiError && !waking && <div className="api-error">{apiError}</div>}
         {mode === 'chat' ? (
           <main className={`app-layout ${appConfig.demoMode ? 'demo-layout' : ''}`}>
             {!appConfig.demoMode && <UploadPanel documents={documents} onChanged={refreshDocuments} />}
@@ -158,7 +195,7 @@ export default function App() {
             </nav>
           </footer>
         )}
-        </div>
+      </div>
     </>
   );
 }

@@ -5,6 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#F7F7F5" />
     <title>DocQuery</title>
+    <meta
+      name="description"
+      content="Interview Vondray Sanford's AI portfolio: ask about his experience, projects, and skills — every answer grounded in cited source documents."
+    />
+    <!-- Social link cards (LinkedIn, Slack, iMessage). Image lives in public/. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="DocQuery — Interview Vondray" />
+    <meta
+      property="og:description"
+      content="A RAG demo that answers questions about Vondray Sanford from his resume, projects, and interview answers — with cited sources. Built in C#/.NET."
+    />
+    <meta property="og:url" content="https://docquery.vondraysanford.com" />
+    <meta property="og:image" content="https://docquery.vondraysanford.com/og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
     <!-- Favicon set copied from vondraysanford.com — same identity, same house. -->
     <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32" />
@@ -22,5 +36,12 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <!-- Cloudflare Web Analytics (privacy-friendly, no cookies; token is public by design) -->
+    <script
+      type="module"
+      src="https://static.cloudflareinsights.com/beacon.min.js"
+      data-cf-beacon='{"token": "86c7ca84631546b49d9724bf2afec145"}'
+    ></script>
+    <!-- End Cloudflare Web Analytics -->
   </body>
 </html>

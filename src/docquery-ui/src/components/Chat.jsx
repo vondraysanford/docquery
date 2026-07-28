@@ -100,6 +100,33 @@ export default function Chat({ messages, setMessages, conversationId, setConvers
           </div>
         ))}
       </div>
+      {messages.length > 0 && (
+        <div className="chat-toolbar">
+          {demoMode &&
+            presetQuestions.map((preset) => (
+              <button
+                key={preset}
+                type="button"
+                className="preset-chip small"
+                disabled={busy}
+                onClick={() => ask(preset)}
+              >
+                {preset}
+              </button>
+            ))}
+          <button
+            type="button"
+            className="chat-reset"
+            disabled={busy}
+            onClick={() => {
+              setMessages([]);
+              setConversationId(null);
+            }}
+          >
+            New conversation
+          </button>
+        </div>
+      )}
       <form className="chat-input" onSubmit={handleSubmit}>
         <input
           type="text"
