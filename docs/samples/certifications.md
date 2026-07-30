@@ -18,7 +18,7 @@ Vondray Sanford earned the following certifications, all issued in June 2026:
 
 Vondray studied for the Azure AI Engineer Associate (AI-102) exam for two weeks, using two main resources: a Udemy course and KodeKloud's AI-102 training. He passed the exam in June 2026.
 
-The AI-102 preparation had two direct spillover effects. First, while working through KodeKloud's official course repository, Vondray found a live Azure Cognitive Services API key hardcoded in a public code sample and submitted a security fix (the full story is in his open-source contributions write-up). Second, the exam material itself exposed a gap that became a project: most retrieval-augmented generation (RAG) tutorials assume Python and a single hosted provider, so Vondray started building DocQuery — a RAG application in C#/.NET with swappable local and Azure providers — to prove the same patterns work in the Microsoft ecosystem (the DocQuery project write-up tells that story).
+The AI-102 preparation had two direct spillover effects. First, while working through KodeKloud's official course repository, Vondray found a live Azure Cognitive Services API key hardcoded in a public code sample and submitted a security fix (the full story is in his open-source contributions write-up). Second, the exam material itself exposed a gap that became a project: most retrieval-augmented generation (RAG) tutorials assume Python and a single hosted provider, so Vondray started building DocQuery (a RAG application in C#/.NET with swappable local and Azure providers) to prove the same patterns work in the Microsoft ecosystem (the DocQuery project write-up tells that story).
 
 ## What's Next
 
