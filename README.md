@@ -1,5 +1,10 @@
 # 📄 DocQuery
 
+[![Live Demo](https://img.shields.io/badge/Live_Demo-docquery.vondraysanford.com-2EA44F)](https://docquery.vondraysanford.com)
+[![.NET 10](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
+[![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 **Ask natural language questions over your documents — powered by local LLMs or Azure OpenAI.**
 
 DocQuery is a retrieval-augmented generation (RAG) application: upload technical documentation or study materials and query them in plain English, with every answer grounded in cited source chunks. Built with a C#/.NET 10 backend and React frontend, designed around a swappable provider architecture: fully local inference (Ollama + ChromaDB) or Azure AI services (Azure OpenAI + AI Search), selected by a single config value.
